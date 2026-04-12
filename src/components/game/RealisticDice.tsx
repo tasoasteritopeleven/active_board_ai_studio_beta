@@ -1,0 +1,155 @@
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { RigidBody, RapierRigidBody } from '@react-three/rapier';
+import * as THREE from 'three';
+
+function Pip({ position }: { position: [number, number, number] }) {
+  return (
+    <mesh position={position}>
+      <sphereGeometry args={[0.04, 16, 16]} />
+      <meshBasicMaterial color="#ffffff" />
+    </mesh>
+  );
+}
+
+export function RealisticDice({ result }: { result: [number, number] | null }) {
+  if (!result) return null;
+
+  return (
+    <group>
+      <DieRigidBody value={result[0]} color="#dc2626" startPos={[-1.5, 4, 0]} targetPos={[-0.6, 0.25, 0]} />
+      <DieRigidBody value={result[1]} color="#1e293b" startPos={[1.5, 4, 0.5]} targetPos={[0.6, 0.25, 0]} />
+    </group>
+  );
+}
+
+const DieRigidBody = ({ value, color, startPos, targetPos }: { value: number, color: string, startPos: [number, number, number], targetPos: [number, number, number] }) => {
+  const ref = useRef<RapierRigidBody>(null);
+  const [phase, setPhase] = useState<'rolling' | 'settling' | 'settled'>('settled');
+  const rollStartTime = useRef(0);
+  const startSettlingPos = useRef(new THREE.Vector3());
+  const startSettlingRot = useRef(new THREE.Quaternion());
+  const targetRot = useRef(new THREE.Quaternion());
+
+  // Visual rotation to put the target value on the +Y face
+  const visualRotation = useMemo(() => {
+    switch (value) {
+      case 1: return new THREE.Euler(0, 0, 0);
+      case 6: return new THREE.Euler(Math.PI, 0, 0);
+      case 2: return new THREE.Euler(Math.PI / 2, 0, 0);
+      case 5: return new THREE.Euler(-Math.PI / 2, 0, 0);
+      case 3: return new THREE.Euler(0, 0, Math.PI / 2);
+      case 4: return new THREE.Euler(0, 0, -Math.PI / 2);
+      default: return new THREE.Euler(0, 0, 0);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (ref.current) {
+      setPhase('rolling');
+      rollStartTime.current = Date.now();
+      
+      // Reset position and wake up
+      ref.current.setTranslation({ x: startPos[0], y: startPos[1], z: startPos[2] }, true);
+      ref.current.setRotation({ x: Math.random(), y: Math.random(), z: Math.random(), w: 1 }, true);
+      ref.current.setBodyType(0, true); // 0 = dynamic
+      
+      // Apply random impulse and torque
+      const impulse = { x: Math.random() * 2 - 1, y: -2, z: Math.random() * 2 - 1 };
+      const torque = { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5, z: Math.random() * 10 - 5 };
+      
+      ref.current.applyImpulse(impulse, true);
+      ref.current.applyTorqueImpulse(torque, true);
+    }
+  }, [value, startPos]);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    
+    const elapsed = (Date.now() - rollStartTime.current) / 1000;
+
+    if (phase === 'rolling' && elapsed > 1.0) {
+      // Switch to settling
+      setPhase('settling');
+      ref.current.setBodyType(1, true); // 1 = kinematicPositionBased
+      
+      const currentPos = ref.current.translation();
+      const currentRot = ref.current.rotation();
+      
+      startSettlingPos.current.set(currentPos.x, currentPos.y, currentPos.z);
+      startSettlingRot.current.set(currentRot.x, currentRot.y, currentRot.z, currentRot.w);
+      
+      // Target rotation is upright (so visual mesh's +Y is up) with random yaw
+      const yaw = Math.random() * Math.PI * 2;
+      targetRot.current.setFromEuler(new THREE.Euler(0, yaw, 0));
+    } else if (phase === 'settling') {
+      const settleProgress = (elapsed - 1.0) / 0.5; // 0.5 seconds to settle
+      
+      if (settleProgress >= 1.0) {
+        setPhase('settled');
+        ref.current.setTranslation({ x: targetPos[0], y: targetPos[1], z: targetPos[2] }, true);
+        ref.current.setRotation(targetRot.current, true);
+      } else {
+        // Ease out cubic
+        const t = 1 - Math.pow(1 - settleProgress, 3);
+        
+        const newPos = new THREE.Vector3().lerpVectors(startSettlingPos.current, new THREE.Vector3(...targetPos), t);
+        const newRot = new THREE.Quaternion().slerpQuaternions(startSettlingRot.current, targetRot.current, t);
+        
+        ref.current.setNextKinematicTranslation(newPos);
+        ref.current.setNextKinematicRotation(newRot);
+      }
+    }
+  });
+
+  return (
+    <RigidBody 
+      ref={ref} 
+      colliders="cuboid" 
+      restitution={0.6} 
+      friction={0.8}
+      linearDamping={0.2}
+      angularDamping={0.2}
+    >
+      <group rotation={visualRotation}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.1} />
+          
+          {/* Face 1 (Top) */}
+          <Pip position={[0, 0.251, 0]} />
+          
+          {/* Face 6 (Bottom) */}
+          <Pip position={[0.12, -0.251, 0.12]} />
+          <Pip position={[0.12, -0.251, 0]} />
+          <Pip position={[0.12, -0.251, -0.12]} />
+          <Pip position={[-0.12, -0.251, 0.12]} />
+          <Pip position={[-0.12, -0.251, 0]} />
+          <Pip position={[-0.12, -0.251, -0.12]} />
+
+          {/* Face 2 (Front) */}
+          <Pip position={[0, 0.12, 0.251]} />
+          <Pip position={[0, -0.12, 0.251]} />
+
+          {/* Face 5 (Back) */}
+          <Pip position={[0, 0, -0.251]} />
+          <Pip position={[0.12, 0.12, -0.251]} />
+          <Pip position={[-0.12, -0.12, -0.251]} />
+          <Pip position={[0.12, -0.12, -0.251]} />
+          <Pip position={[-0.12, 0.12, -0.251]} />
+
+          {/* Face 3 (Right) */}
+          <Pip position={[0.251, 0.12, 0.12]} />
+          <Pip position={[0.251, 0, 0]} />
+          <Pip position={[0.251, -0.12, -0.12]} />
+
+          {/* Face 4 (Left) */}
+          <Pip position={[-0.251, 0.12, 0.12]} />
+          <Pip position={[-0.251, 0.12, -0.12]} />
+          <Pip position={[-0.251, -0.12, 0.12]} />
+          <Pip position={[-0.251, -0.12, -0.12]} />
+        </mesh>
+      </group>
+    </RigidBody>
+  );
+};
