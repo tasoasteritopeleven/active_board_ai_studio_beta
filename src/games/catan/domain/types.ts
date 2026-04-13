@@ -73,6 +73,9 @@ export interface Player {
   color: string;
   resources: Record<ResourceType, number>;
   victoryPoints: number;
+  devCards?: any[];
+  longestRoad?: number;
+  largestArmy?: number;
 }
 
 export interface CatanMatchState {

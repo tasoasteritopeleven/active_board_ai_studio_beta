@@ -68,7 +68,7 @@ const DieRigidBody = ({ value, color, startPos, targetPos }: { value: number, co
     
     const elapsed = (Date.now() - rollStartTime.current) / 1000;
 
-    if (phase === 'rolling' && elapsed > 1.0) {
+    if (phase === 'rolling' && elapsed > 1.5) {
       // Switch to settling
       setPhase('settling');
       ref.current.setBodyType(1, true); // 1 = kinematicPositionBased
@@ -83,18 +83,25 @@ const DieRigidBody = ({ value, color, startPos, targetPos }: { value: number, co
       const yaw = Math.random() * Math.PI * 2;
       targetRot.current.setFromEuler(new THREE.Euler(0, yaw, 0));
     } else if (phase === 'settling') {
-      const settleProgress = (elapsed - 1.0) / 0.5; // 0.5 seconds to settle
+      const settleProgress = (elapsed - 1.5) / 0.6; // 0.6 seconds to settle
       
       if (settleProgress >= 1.0) {
         setPhase('settled');
         ref.current.setTranslation({ x: targetPos[0], y: targetPos[1], z: targetPos[2] }, true);
         ref.current.setRotation(targetRot.current, true);
       } else {
-        // Ease out cubic
-        const t = 1 - Math.pow(1 - settleProgress, 3);
+        // Ease out with decaying bounce
+        const t = settleProgress;
+        // 3 bounces, decaying amplitude
+        const bounce = Math.abs(Math.cos(t * Math.PI * 2.5)) * Math.pow(1 - t, 2) * 0.8;
         
-        const newPos = new THREE.Vector3().lerpVectors(startSettlingPos.current, new THREE.Vector3(...targetPos), t);
-        const newRot = new THREE.Quaternion().slerpQuaternions(startSettlingRot.current, targetRot.current, t);
+        // Use easeOutQuad for the base interpolation
+        const easeT = 1 - (1 - t) * (1 - t);
+        
+        const newPos = new THREE.Vector3().lerpVectors(startSettlingPos.current, new THREE.Vector3(...targetPos), easeT);
+        newPos.y += bounce; // Add bounce to Y
+        
+        const newRot = new THREE.Quaternion().slerpQuaternions(startSettlingRot.current, targetRot.current, easeT);
         
         ref.current.setNextKinematicTranslation(newPos);
         ref.current.setNextKinematicRotation(newRot);
@@ -106,10 +113,10 @@ const DieRigidBody = ({ value, color, startPos, targetPos }: { value: number, co
     <RigidBody 
       ref={ref} 
       colliders="cuboid" 
-      restitution={0.6} 
-      friction={0.8}
-      linearDamping={0.2}
-      angularDamping={0.2}
+      restitution={0.8} 
+      friction={0.5}
+      linearDamping={0.1}
+      angularDamping={0.1}
     >
       <group rotation={visualRotation}>
         <mesh castShadow receiveShadow>
@@ -128,8 +135,8 @@ const DieRigidBody = ({ value, color, startPos, targetPos }: { value: number, co
           <Pip position={[-0.12, -0.251, -0.12]} />
 
           {/* Face 2 (Front) */}
-          <Pip position={[0, 0.12, 0.251]} />
-          <Pip position={[0, -0.12, 0.251]} />
+          <Pip position={[0.12, 0.12, 0.251]} />
+          <Pip position={[-0.12, -0.12, 0.251]} />
 
           {/* Face 5 (Back) */}
           <Pip position={[0, 0, -0.251]} />

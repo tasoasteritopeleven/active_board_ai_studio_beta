@@ -11,7 +11,7 @@ export interface AIPlayerConfig {
 }
 
 export function useCatanAI(aiConfigs: AIPlayerConfig[]) {
-  const { activePlayerId, phase, rollDice, endTurn } = useCatanStore();
+  const { activePlayerId, phase, rollDice, endTurn, robberMode, hexes, confirmRobberMove, setPendingRobberHexId } = useCatanStore();
 
   useEffect(() => {
     const aiConfig = aiConfigs.find(c => c.id === activePlayerId && c.isAI);
@@ -26,6 +26,34 @@ export function useCatanAI(aiConfigs: AIPlayerConfig[]) {
         timeoutId = setTimeout(() => {
           rollDice();
         }, reactionTime);
+      } else if (robberMode) {
+        // AI moves the robber
+        timeoutId = setTimeout(() => {
+          const store = useCatanStore.getState();
+          const validHexes = Object.values(store.hexes).filter(h => h.terrain !== 'DESERT' && h.terrain !== 'WATER' && h.id !== store.robberHexId);
+          if (validHexes.length > 0) {
+            const randomHex = validHexes[Math.floor(Math.random() * validHexes.length)];
+            setPendingRobberHexId(randomHex.id);
+            
+            // Wait a bit then confirm
+            setTimeout(() => {
+              const currentStore = useCatanStore.getState();
+              // Find someone to steal from
+              const adjacentPlayers = new Set<string>();
+              Object.values(currentStore.vertices).forEach(v => {
+                if (v.building && v.id.includes(randomHex.id)) {
+                  if (v.building.ownerId !== activePlayerId) {
+                    adjacentPlayers.add(v.building.ownerId);
+                  }
+                }
+              });
+              const victims = Array.from(adjacentPlayers);
+              const target = victims.length > 0 ? victims[Math.floor(Math.random() * victims.length)] : undefined;
+              
+              confirmRobberMove(target);
+            }, 1000);
+          }
+        }, 1500);
       } else if (phase === LifecyclePhase.TRADING_BUILDING) {
         // AI decides to build or end turn
         const reactionTime = getReactionTime(aiConfig.difficulty);
@@ -33,14 +61,14 @@ export function useCatanAI(aiConfigs: AIPlayerConfig[]) {
           // TODO: Implement actual building logic based on difficulty
           // For now, just end turn
           endTurn();
-        }, reactionTime + 1000); // Add a bit more delay for "thinking"
+        }, reactionTime + 1500); // Add a bit more delay for "thinking"
       }
     };
 
     makeMove();
 
     return () => clearTimeout(timeoutId);
-  }, [activePlayerId, phase, aiConfigs, rollDice, endTurn]);
+  }, [activePlayerId, phase, robberMode, aiConfigs, rollDice, endTurn, setPendingRobberHexId, confirmRobberMove]);
 }
 
 function getReactionTime(difficulty: AIDifficulty): number {

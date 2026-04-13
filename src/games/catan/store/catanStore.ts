@@ -19,7 +19,24 @@ export interface TradeOffer {
   partnerId?: PlayerId;
 }
 
+export interface TurnHistoryEntry {
+  turnNumber: number;
+  playerId: string;
+  diceResult?: [number, number];
+  actions: string[];
+}
+
+export interface DevCard {
+  id: string;
+  type: 'KNIGHT' | 'VICTORY_POINT' | 'ROAD_BUILDING' | 'YEAR_OF_PLENTY' | 'MONOPOLY';
+  played: boolean;
+}
+
 interface CatanStore extends CatanMatchState {
+  turnNumber: number;
+  turnHistory: TurnHistoryEntry[];
+  currentTurnLog: string[];
+  
   rollDice: () => void;
   endTurn: () => void;
   buildSettlement: (vertexId: string) => void;
@@ -51,12 +68,19 @@ interface CatanStore extends CatanMatchState {
   // Robber actions
   setPendingRobberHexId: (hexId: string | null) => void;
   confirmRobberMove: (stealFromPlayerId?: PlayerId) => void;
+
+  // Dev Cards
+  buyDevCard: () => void;
+  playDevCard: (cardId: string) => void;
+
+  // Bank Trade
+  bankTrade: (give: ResourceType, get: ResourceType) => void;
 }
 
 const INITIAL_PLAYERS = {
-  'p1': { id: 'p1', name: 'Player 1', color: '#dc2626', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0 },
-  'p2': { id: 'p2', name: 'Player 2', color: '#2563eb', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0 },
-  'p3': { id: 'p3', name: 'Player 3', color: '#16a34a', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0 },
+  'p1': { id: 'p1', name: 'Player 1', color: '#dc2626', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0, devCards: [], longestRoad: 0, largestArmy: 0 },
+  'p2': { id: 'p2', name: 'Player 2', color: '#2563eb', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0, devCards: [], longestRoad: 0, largestArmy: 0 },
+  'p3': { id: 'p3', name: 'Player 3', color: '#16a34a', resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }, victoryPoints: 0, devCards: [], longestRoad: 0, largestArmy: 0 },
 };
 
 const initialHexes = generateTopology(2);
@@ -81,6 +105,9 @@ export const useCatanStore = create<CatanStore>((set) => ({
   activeTrade: null,
   robberMode: false,
   pendingRobberHexId: null,
+  turnNumber: 1,
+  turnHistory: [],
+  currentTurnLog: [],
 
   setCarouselIndex: (index) => set((state) => ({
     uiState: { ...state.uiState, activeCarouselIndex: index }
@@ -100,6 +127,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
     if (!state.pendingRobberHexId) return state;
 
     const nextPlayers = { ...state.players };
+    let stealLog = 'Moved Robber.';
     
     if (stealFromPlayerId) {
       const activePlayer = { ...nextPlayers[state.activePlayerId] };
@@ -122,15 +150,19 @@ export const useCatanStore = create<CatanStore>((set) => ({
         victim.resources = victimResources;
         nextPlayers[state.activePlayerId] = activePlayer;
         nextPlayers[stealFromPlayerId] = victim;
+        stealLog = `Moved Robber and stole from ${victim.name}.`;
       }
     }
+
+    gameEvents.dispatch({ type: 'ROBBER_MOVED', hexId: state.pendingRobberHexId, targetPlayerId: stealFromPlayerId });
 
     return {
       robberHexId: state.pendingRobberHexId,
       robberMode: false,
       pendingRobberHexId: null,
       players: nextPlayers,
-      phase: LifecyclePhase.TRADING_BUILDING
+      phase: LifecyclePhase.TRADING_BUILDING,
+      currentTurnLog: [...state.currentTurnLog, stealLog]
     };
   }),
 
@@ -180,6 +212,10 @@ export const useCatanStore = create<CatanStore>((set) => ({
     const activeResources = { ...activePlayer.resources };
     const partnerResources = { ...partnerPlayer.resources };
 
+    const giveStr = Object.entries(state.activeTrade.give).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ');
+    const getStr = Object.entries(state.activeTrade.get).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ');
+    const tradeLog = `Traded with ${partnerPlayer.name}: Gave [${giveStr}] for [${getStr}].`;
+
     // Active player gives, partner gets
     for (const [res, amount] of Object.entries(state.activeTrade.give)) {
       activeResources[res as ResourceType] -= amount;
@@ -197,7 +233,13 @@ export const useCatanStore = create<CatanStore>((set) => ({
     nextPlayers[state.activePlayerId] = activePlayer;
     nextPlayers[partnerId] = partnerPlayer;
 
-    return { players: nextPlayers, activeTrade: null };
+    gameEvents.dispatch({ type: 'TRADE_COMPLETED', tradeId: Math.random().toString() });
+
+    return { 
+      players: nextPlayers, 
+      activeTrade: null,
+      currentTurnLog: [...state.currentTurnLog, tradeLog]
+    };
   }),
 
   confirmBuild: () => set((state) => {
@@ -214,12 +256,15 @@ export const useCatanStore = create<CatanStore>((set) => ({
       nextResources[ResourceType.BRICK] -= 1;
       nextResources[ResourceType.SHEEP] -= 1;
       nextResources[ResourceType.WHEAT] -= 1;
+      activePlayer.victoryPoints += 1;
     } else if (type === 'CITY' && state.phase === LifecyclePhase.TRADING_BUILDING) {
       nextResources[ResourceType.WHEAT] -= 2;
       nextResources[ResourceType.ORE] -= 3;
+      activePlayer.victoryPoints += 1; // Settlement (1) -> City (2) = +1
     } else if (type === 'ROAD' && state.phase === LifecyclePhase.TRADING_BUILDING) {
       nextResources[ResourceType.WOOD] -= 1;
       nextResources[ResourceType.BRICK] -= 1;
+      activePlayer.longestRoad += 1;
     }
 
     activePlayer.resources = nextResources;
@@ -231,6 +276,8 @@ export const useCatanStore = create<CatanStore>((set) => ({
       buildingType: type, 
       locationId: locationId 
     });
+
+    const buildLog = `Built a ${type}.`;
 
     if (type === 'SETTLEMENT' || type === 'CITY') {
       return {
@@ -244,7 +291,8 @@ export const useCatanStore = create<CatanStore>((set) => ({
           }
         },
         buildMode: null,
-        pendingBuild: null
+        pendingBuild: null,
+        currentTurnLog: [...state.currentTurnLog, buildLog]
       };
     } else if (type === 'ROAD') {
       return {
@@ -259,7 +307,103 @@ export const useCatanStore = create<CatanStore>((set) => ({
           }
         },
         buildMode: null,
-        pendingBuild: null
+        pendingBuild: null,
+        currentTurnLog: [...state.currentTurnLog, buildLog]
+      };
+    }
+    return state;
+  }),
+
+  buyDevCard: () => set((state) => {
+    if (state.phase !== LifecyclePhase.TRADING_BUILDING) return state;
+    
+    const nextPlayers = { ...state.players };
+    const activePlayer = { ...nextPlayers[state.activePlayerId] };
+    const nextResources = { ...activePlayer.resources };
+
+    if (nextResources[ResourceType.SHEEP] >= 1 && nextResources[ResourceType.WHEAT] >= 1 && nextResources[ResourceType.ORE] >= 1) {
+      nextResources[ResourceType.SHEEP] -= 1;
+      nextResources[ResourceType.WHEAT] -= 1;
+      nextResources[ResourceType.ORE] -= 1;
+
+      const cardTypes: DevCard['type'][] = ['KNIGHT', 'KNIGHT', 'KNIGHT', 'VICTORY_POINT', 'ROAD_BUILDING', 'YEAR_OF_PLENTY', 'MONOPOLY'];
+      const randomType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
+      
+      const newCard: DevCard = {
+        id: Math.random().toString(),
+        type: randomType,
+        played: false
+      };
+
+      activePlayer.devCards = [...(activePlayer.devCards || []), newCard];
+      activePlayer.resources = nextResources;
+      nextPlayers[state.activePlayerId] = activePlayer;
+
+      return {
+        players: nextPlayers,
+        currentTurnLog: [...state.currentTurnLog, `Bought a Development Card.`]
+      };
+    }
+    return state;
+  }),
+
+  playDevCard: (cardId) => set((state) => {
+    const nextPlayers = { ...state.players };
+    const activePlayer = { ...nextPlayers[state.activePlayerId] };
+    
+    const cardIndex = activePlayer.devCards?.findIndex(c => c.id === cardId);
+    if (cardIndex !== undefined && cardIndex !== -1) {
+      const card = activePlayer.devCards![cardIndex];
+      if (!card.played) {
+        activePlayer.devCards![cardIndex].played = true;
+        
+        let logMsg = `Played Development Card: ${card.type}`;
+        
+        if (card.type === 'KNIGHT') {
+          activePlayer.largestArmy += 1;
+          return {
+            players: nextPlayers,
+            robberMode: true,
+            currentTurnLog: [...state.currentTurnLog, logMsg]
+          };
+        } else if (card.type === 'VICTORY_POINT') {
+          activePlayer.victoryPoints += 1;
+        } else if (card.type === 'ROAD_BUILDING') {
+          activePlayer.resources[ResourceType.WOOD] += 2;
+          activePlayer.resources[ResourceType.BRICK] += 2;
+          logMsg += " (Gained 2 Wood, 2 Brick)";
+        } else if (card.type === 'YEAR_OF_PLENTY') {
+          activePlayer.resources[ResourceType.WHEAT] += 1;
+          activePlayer.resources[ResourceType.ORE] += 1;
+          logMsg += " (Gained 1 Wheat, 1 Ore)";
+        }
+        
+        return {
+          players: nextPlayers,
+          currentTurnLog: [...state.currentTurnLog, logMsg]
+        };
+      }
+    }
+    return state;
+  }),
+
+  bankTrade: (give, get) => set((state) => {
+    if (state.phase !== LifecyclePhase.TRADING_BUILDING) return state;
+
+    const nextPlayers = { ...state.players };
+    const activePlayer = { ...nextPlayers[state.activePlayerId] };
+    const nextResources = { ...activePlayer.resources };
+
+    if (nextResources[give] >= 4) {
+      nextResources[give] -= 4;
+      nextResources[get] += 1;
+      
+      activePlayer.resources = nextResources;
+      nextPlayers[state.activePlayerId] = activePlayer;
+
+      return {
+        players: nextPlayers,
+        currentTurnLog: [...state.currentTurnLog, `Traded 4 ${give} for 1 ${get} with the Bank.`]
       };
     }
     return state;
@@ -299,6 +443,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
     }
 
     activePlayer.resources = nextResources;
+    activePlayer.victoryPoints += 1;
     nextPlayers[state.activePlayerId] = activePlayer;
 
     return {
@@ -397,13 +542,26 @@ export const useCatanStore = create<CatanStore>((set) => ({
 
   endTurn: () => set((state) => {
     if (state.phase !== LifecyclePhase.TRADING_BUILDING) return state;
+    
+    // Save history entry
+    const historyEntry: TurnHistoryEntry = {
+      turnNumber: state.turnNumber,
+      playerId: state.activePlayerId,
+      diceResult: state.diceResult || undefined,
+      actions: [...state.currentTurnLog]
+    };
+
     const playerIds = Object.keys(state.players);
     const currentIndex = playerIds.indexOf(state.activePlayerId);
     const nextIndex = (currentIndex + 1) % playerIds.length;
+    
     return {
       activePlayerId: playerIds[nextIndex],
       phase: LifecyclePhase.ROLLING,
-      diceResult: null
+      diceResult: null,
+      turnNumber: state.turnNumber + 1,
+      turnHistory: [...state.turnHistory, historyEntry],
+      currentTurnLog: [] // Reset log for next turn
     };
   })
 }));

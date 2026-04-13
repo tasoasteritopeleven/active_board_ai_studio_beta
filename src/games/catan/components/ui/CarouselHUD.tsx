@@ -175,9 +175,9 @@ export function CarouselHUD() {
                     {/* Card Content Switcher */}
                     {uiState.activeCarouselIndex === 0 && <ResourcesCard player={activePlayer} />}
                     {uiState.activeCarouselIndex === 1 && <BuildCard phase={phase} />}
-                    {uiState.activeCarouselIndex === 2 && <BankTradeCard />}
+                    {uiState.activeCarouselIndex === 2 && <BankTradeCard player={activePlayer} />}
                     {uiState.activeCarouselIndex === 3 && <PlayerTradeCard />}
-                    {uiState.activeCarouselIndex === 4 && <DevCardsCard />}
+                    {uiState.activeCarouselIndex === 4 && <DevCardsCard player={activePlayer} />}
                     {uiState.activeCarouselIndex === 5 && <StatsCard player={activePlayer} />}
                   </motion.div>
                 </AnimatePresence>
@@ -250,31 +250,88 @@ function BuildCard({ phase }: { phase: LifecyclePhase }) {
 
   return (
     <div className="flex flex-col gap-3 h-full justify-center">
-      <Button disabled={!canBuild} onClick={() => setBuildMode('ROAD')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700">
-        <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center mr-4">R</div>
-        Build Road <span className="ml-auto text-xs text-slate-400 font-normal">1W, 1B</span>
+      <Button disabled={!canBuild} onClick={() => setBuildMode('ROAD')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white">
+        <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center mr-4 text-white">R</div>
+        Build Road <span className="ml-auto text-xs text-white font-normal">1W, 1B</span>
       </Button>
-      <Button disabled={!canBuild} onClick={() => setBuildMode('SETTLEMENT')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700">
-        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-4">S</div>
-        Build Settlement <span className="ml-auto text-xs text-slate-400 font-normal">1W, 1B, 1S, 1Wh</span>
+      <Button disabled={!canBuild} onClick={() => setBuildMode('SETTLEMENT')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white">
+        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-4 text-white">S</div>
+        Build Settlement <span className="ml-auto text-xs text-white font-normal">1W, 1B, 1S, 1Wh</span>
       </Button>
-      <Button disabled={!canBuild} onClick={() => setBuildMode('CITY')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700">
-        <div className="w-8 h-8 bg-slate-400 rounded flex items-center justify-center mr-4">C</div>
-        Build City <span className="ml-auto text-xs text-slate-400 font-normal">2Wh, 3O</span>
+      <Button disabled={!canBuild} onClick={() => setBuildMode('CITY')} className="h-14 text-lg font-bold justify-start px-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white">
+        <div className="w-8 h-8 bg-slate-400 rounded flex items-center justify-center mr-4 text-white">C</div>
+        Build City <span className="ml-auto text-xs text-white font-normal">2Wh, 3O</span>
       </Button>
     </div>
   );
 }
 
-function BankTradeCard() {
+function BankTradeCard({ player }: { player: any }) {
+  const { bankTrade } = useCatanStore();
+  const [give, setGive] = useState<string | null>(null);
+  const [get, setGet] = useState<string | null>(null);
+
+  const resources = ['WOOD', 'BRICK', 'SHEEP', 'WHEAT', 'ORE'] as const;
+  const colors: Record<string, string> = {
+    WOOD: 'bg-green-600', BRICK: 'bg-orange-600', SHEEP: 'bg-lime-500', WHEAT: 'bg-yellow-500', ORE: 'bg-slate-500'
+  };
+
+  const canTrade = give && get && give !== get && player.resources[give] >= 4;
+
+  const handleTrade = () => {
+    if (canTrade) {
+      bankTrade(give as any, get as any);
+      setGive(null);
+      setGet(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-      <ArrowRightLeft className="w-12 h-12 text-slate-500" />
-      <div>
-        <h4 className="text-white font-bold text-lg">Bank Trade (4:1)</h4>
-        <p className="text-slate-400 text-sm">Select 4 identical resources to trade for 1 of any resource.</p>
+    <div className="flex flex-col h-full space-y-4">
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-white font-bold">Bank Trade (4:1)</h4>
       </div>
-      <Button className="w-full h-12 text-lg font-bold">Initiate Trade</Button>
+      
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+        <div>
+          <p className="text-xs font-bold text-slate-400 mb-2">GIVE 4 OF:</p>
+          <div className="flex gap-2 justify-center">
+            {resources.map(res => (
+              <button 
+                key={`give-${res}`}
+                onClick={() => setGive(res)}
+                className={`w-10 h-10 rounded-full ${colors[res]} flex items-center justify-center shadow-inner text-xs font-black text-white transition-transform ${give === res ? 'ring-4 ring-white scale-110' : 'opacity-50 hover:opacity-100'} ${player.resources[res] < 4 ? 'grayscale cursor-not-allowed' : ''}`}
+                disabled={player.resources[res] < 4}
+              >
+                {res.substring(0, 2)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold text-slate-400 mb-2">GET 1 OF:</p>
+          <div className="flex gap-2 justify-center">
+            {resources.map(res => (
+              <button 
+                key={`get-${res}`}
+                onClick={() => setGet(res)}
+                className={`w-10 h-10 rounded-full ${colors[res]} flex items-center justify-center shadow-inner text-xs font-black text-white transition-transform ${get === res ? 'ring-4 ring-white scale-110' : 'opacity-50 hover:opacity-100'}`}
+              >
+                {res.substring(0, 2)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Button 
+        disabled={!canTrade} 
+        onClick={handleTrade}
+        className="w-full h-12 text-lg font-bold bg-primary hover:bg-primary/90 text-white"
+      >
+        Initiate Trade
+      </Button>
     </div>
   );
 }
@@ -293,7 +350,7 @@ function PlayerTradeCard() {
           <p className="text-slate-400 text-sm">Propose a trade to other players.</p>
         </div>
         <Button 
-          className="w-full h-12 text-lg font-bold"
+          className="w-full h-12 text-lg font-bold text-white"
           onClick={() => updateTradeDraft(
             { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 },
             { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 }
@@ -329,7 +386,7 @@ function PlayerTradeCard() {
           <h4 className="text-white font-bold text-lg">Trade Accepted!</h4>
           <p className="text-slate-400 text-sm">{partner.name} accepted your offer.</p>
         </div>
-        <Button className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700" onClick={() => executeTrade(activeTrade.partnerId!)}>Execute Trade</Button>
+        <Button className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white" onClick={() => executeTrade(activeTrade.partnerId!)}>Execute Trade</Button>
       </div>
     );
   }
@@ -415,7 +472,7 @@ function PlayerTradeCard() {
       <Button 
         disabled={!isValidOffer} 
         onClick={proposeTrade}
-        className="w-full h-12 mt-2 text-lg font-bold bg-primary hover:bg-primary/90"
+        className="w-full h-12 mt-2 text-lg font-bold bg-primary hover:bg-primary/90 text-white"
       >
         Propose Trade
       </Button>
@@ -423,15 +480,56 @@ function PlayerTradeCard() {
   );
 }
 
-function DevCardsCard() {
+function DevCardsCard({ player }: { player: any }) {
+  const { buyDevCard, playDevCard, phase } = useCatanStore();
+  const canBuy = phase === LifecyclePhase.TRADING_BUILDING && 
+                 player.resources.SHEEP >= 1 && 
+                 player.resources.WHEAT >= 1 && 
+                 player.resources.ORE >= 1;
+
+  const unplayedCards = player.devCards?.filter((c: any) => !c.played) || [];
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-      <Scroll className="w-12 h-12 text-purple-500" />
-      <div>
-        <h4 className="text-white font-bold text-lg">Development Cards</h4>
-        <p className="text-slate-400 text-sm">You have no development cards.</p>
+    <div className="flex flex-col h-full space-y-4">
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-white font-bold">Development Cards</h4>
       </div>
-      <Button className="w-full h-12 text-lg font-bold bg-purple-600 hover:bg-purple-700">Buy Card (1S, 1Wh, 1O)</Button>
+      
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+        {unplayedCards.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-2 opacity-50">
+            <Scroll className="w-12 h-12 text-purple-500" />
+            <p className="text-slate-400 text-sm">You have no development cards.</p>
+          </div>
+        ) : (
+          unplayedCards.map((card: any) => (
+            <div key={card.id} className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-900/50 flex items-center justify-center text-purple-400">
+                  <Scroll className="w-4 h-4" />
+                </div>
+                <span className="text-white font-bold text-sm">{card.type.replace(/_/g, ' ')}</span>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="h-8 border-purple-500/50 text-purple-400 hover:bg-purple-500/20"
+                onClick={() => playDevCard(card.id)}
+              >
+                Play
+              </Button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <Button 
+        disabled={!canBuy} 
+        onClick={buyDevCard}
+        className="w-full h-12 text-lg font-bold bg-purple-600 hover:bg-purple-700 text-white"
+      >
+        Buy Card (1S, 1Wh, 1O)
+      </Button>
     </div>
   );
 }
@@ -445,11 +543,11 @@ function StatsCard({ player }: { player: any }) {
       </div>
       <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
         <span className="text-slate-300 font-bold">Longest Road</span>
-        <span className="text-xl font-bold text-white">0</span>
+        <span className="text-xl font-bold text-white">{player.longestRoad || 0}</span>
       </div>
       <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
         <span className="text-slate-300 font-bold">Largest Army</span>
-        <span className="text-xl font-bold text-white">0</span>
+        <span className="text-xl font-bold text-white">{player.largestArmy || 0}</span>
       </div>
     </div>
   );
