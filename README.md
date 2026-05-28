@@ -1,56 +1,60 @@
 # TableForge
 
-**TableForge** is a VR-first web platform for remote board gaming. Play classic titles in immersive 3D with telepresence, real-time rooms (optional), and production-oriented architecture.
-
-## Features
-
-| Area | Status |
-|------|--------|
-| **Catan 3D** | Playable local MVP — dice, building, trade, robber, AI bots, **WebXR VR** |
-| **Risk 3D** | 3D world map, reinforce phases, **combat resolution**, continent bonuses, VR |
-| **Monopoly / Codenames** | Early UI shells |
-| **WebXR** | Enter VR on supported headsets (Chrome + Quest, etc.) |
-| **Telepresence** | Local webcam panels in 3D scene |
-| **Liveblocks** | Optional multiplayer rooms via `VITE_LIVEBLOCKS_PUBLIC_KEY` |
-| **PWA** | Installable manifest for tablets / venue kiosks |
+VR-first remote board gaming platform — Catan, Risk, Monopoly, Codenames in 3D with WebRTC telepresence and optional real-time multiplayer.
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local   # optional: GEMINI_API_KEY, VITE_LIVEBLOCKS_PUBLIC_KEY
+cp .env.example .env.local
+# Optional: VITE_LIVEBLOCKS_PUBLIC_KEY, GEMINI_API_KEY (server only)
 npm run dev
 ```
 
-Open http://localhost:3000
+- **Web app:** http://localhost:3000  
+- **API (Gemini proxy):** http://localhost:3001  
 
 ## Environment
 
-| Variable | Purpose |
-|----------|---------|
-| `GEMINI_API_KEY` | Reserved for AI features (server-side proxy recommended) |
-| `VITE_LIVEBLOCKS_PUBLIC_KEY` | Enables Liveblocks `RoomProvider` for lobbies |
-| `APP_URL` | Hosted URL for OAuth callbacks |
+| Variable | Where | Purpose |
+|----------|--------|---------|
+| `VITE_LIVEBLOCKS_PUBLIC_KEY` | Client | Multiplayer rooms + WebRTC signaling |
+| `GEMINI_API_KEY` | **Server only** | `/api/ai/*` — never bundled in Vite |
+| `PORT` | Server | API port (default 3001) |
+
+## Features
+
+- **WebXR** — Enter VR on Catan & Risk (`@react-three/xr`)
+- **WebRTC telepresence** — Mesh peer video via Liveblocks signaling (fallback: local camera)
+- **Catan multiplayer** — Host-authoritative state sync over Liveblocks broadcast
+- **Risk** — Combat, continents, VR
+- **Monopoly** — Playable engine (roll, buy, rent, jail)
+- **Codenames** — Full clue/guess loop + optional Gemini spymaster hints
+- **Code splitting** — Lazy routes + manual chunks (`three`, `r3f`, `liveblocks`)
 
 ## Scripts
 
-- `npm run dev` — development server (port 3000)
-- `npm run build` — production build
-- `npm run lint` — TypeScript check
-- `npm run preview` — preview production build
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite + Express API concurrently |
+| `npm run dev:client` | Frontend only |
+| `npm run dev:server` | API only |
+| `npm run build` | Production build |
+| `npm run lint` | TypeScript check |
 
-## Architecture
+## Multiplayer
 
-- **React 19 + Vite 6 + TypeScript**
-- **React Three Fiber** + **Rapier** physics + **@react-three/xr** for WebXR
-- **Zustand** (Catan state) / React state (Risk)
-- **shadcn / Radix** UI, **Framer Motion**
-- Domain layer under `src/games/catan/domain/` (event reducers — integration in progress)
+1. Set `VITE_LIVEBLOCKS_PUBLIC_KEY` in `.env.local`
+2. Open Catan with room id: `/games/catan?room=my-table`
+3. Host (lowest connection id) syncs game state; peers receive updates
+4. Enable camera/mic on presence panels for WebRTC mesh
 
-## VR usage
+## AI (server-side)
 
-On a WebXR-capable browser and headset, open **Catan** or **Risk** and click **Είσοδος VR**. Desktop mouse/touch orbit controls remain available outside VR.
+```bash
+curl -X POST http://localhost:3001/api/ai/codenames-hint \
+  -H 'Content-Type: application/json' \
+  -d '{"words":["APPLE","MOON"],"team":"red"}'
+```
 
-## License
-
-See repository license. Game names (Catan, Risk, etc.) are trademarks of their respective owners; this project is an independent fan/technical demo.
+Gemini keys stay on the server — the Vite client never receives `GEMINI_API_KEY`.

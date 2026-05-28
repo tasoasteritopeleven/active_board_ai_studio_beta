@@ -19,7 +19,10 @@ import {
   Trophy,
   Dices
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GameRoomProvider } from '@/components/multiplayer/GameRoomProvider';
+import { useCatanMultiplayer } from './multiplayer/useCatanMultiplayer';
+import { liveblocksEnabled } from '@/lib/liveblocks/client';
 import { Button } from '@/components/ui/button';
 import { CatanBoard3D } from './components/CatanBoard3D';
 import { useCatanStore } from './store/catanStore';
@@ -40,7 +43,7 @@ import {
   SetupPromptOverlay
 } from './components/GameUI';
 
-export default function CatanGamePage() {
+function CatanGamePageInner({ multiplayer }: { multiplayer?: { isInRoom: boolean; isHost: boolean; playerCount: number } }) {
   const navigate = useNavigate();
   const { 
     players, 
@@ -454,4 +457,24 @@ function GameGuideModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
       </motion.div>
     </div>
   );
+}
+
+export default function CatanGamePage() {
+  const [params] = useSearchParams();
+  const roomId = params.get('room') ?? 'public';
+  return (
+    <GameRoomProvider roomId={`tableforge-catan-${roomId}`} withCatanStorage>
+      <CatanGamePageWithSync />
+    </GameRoomProvider>
+  );
+}
+
+function CatanGamePageWithSync() {
+  if (!liveblocksEnabled) return <CatanGamePageInner />;
+  return <LiveblocksCatanSync />;
+}
+
+function LiveblocksCatanSync() {
+  const { isInRoom, isHost, playerCount } = useCatanMultiplayer(true);
+  return <CatanGamePageInner multiplayer={{ isInRoom, isHost, playerCount }} />;
 }

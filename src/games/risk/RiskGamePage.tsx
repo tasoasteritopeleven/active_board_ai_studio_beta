@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GameRoomProvider } from '@/components/multiplayer/GameRoomProvider';
 import RiskBoard3D from './RiskBoard3D';
 import { type GameState, type Territory, type Player } from './RiskEngine';
 import { useRiskAI, AIPlayerConfig } from './ai/useRiskAI';
@@ -84,7 +85,7 @@ function generateInitialGameState(playerCount: number, baseTerritories: Territor
   };
 }
 
-export default function RiskGamePage() {
+function RiskGamePageInner() {
   const navigate = useNavigate();
   const { roomCode } = useParams();
   const [selectedTerritory, setSelectedTerritory] = useState<string | null>(null);
@@ -520,5 +521,16 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce, onAttac
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function RiskGamePage() {
+  const [params] = useSearchParams();
+  const room = params.get('room') ?? 'public';
+  return (
+    <GameRoomProvider roomId={`tableforge-risk-${room}`}>
+      <RiskGamePageInner />
+    </GameRoomProvider>
   );
 }
