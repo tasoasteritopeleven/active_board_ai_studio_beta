@@ -1,4 +1,8 @@
 import express from 'express';
+import { buildIceServers } from './webrtc/iceServers.js';
+import { createLiveKitParticipantToken, isLiveKitConfigured } from './livekit/token.js';
+
+
 import cors from 'cors';
 import { GoogleGenAI } from '@google/genai';
 
@@ -10,7 +14,12 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: '32kb' }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, ai: Boolean(GEMINI_API_KEY) });
+  res.json({
+    ok: true,
+    ai: Boolean(GEMINI_API_KEY),
+    turn: Boolean(process.env.TURN_URLS),
+    livekit: isLiveKitConfigured(),
+  });
 });
 
 app.post('/api/ai/chat', async (req, res) => {
@@ -78,6 +87,43 @@ The clue must be one word, uppercase, not matching any board word. Count is how 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Hint generation failed' });
+  }
+});
+
+
+
+app.get('/api/webrtc/ice-servers', (_req, res) => {
+  res.json({ iceServers: buildIceServers() });
+});
+
+app.get('/api/livekit/status', (_req, res) => {
+  res.json({ configured: isLiveKitConfigured(), url: process.env.VITE_LIVEKIT_URL ?? null });
+});
+
+app.post('/api/livekit/token', async (req, res) => {
+  if (!isLiveKitConfigured()) {
+    res.status(503).json({ error: 'LiveKit API keys not configured on server' });
+    return;
+  }
+  const { room, identity, name } = req.body as {
+    room?: string;
+    identity?: string;
+    name?: string;
+  };
+  if (!room?.trim() || !identity?.trim()) {
+    res.status(400).json({ error: 'room and identity required' });
+    return;
+  }
+  try {
+    const token = await createLiveKitParticipantToken({
+      roomName: room.trim(),
+      identity: identity.trim(),
+      name: name?.trim(),
+    });
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'LiveKit token generation failed' });
   }
 });
 

@@ -1,6 +1,6 @@
 import type { WebRTCSignalMessage } from './types';
 
-const ICE_SERVERS: RTCConfiguration = {
+const DEFAULT_ICE: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 
@@ -12,14 +12,20 @@ type SignalSender = (message: WebRTCSignalMessage) => void;
 export class WebRTCMesh {
   private readonly localId: string;
   private readonly sendSignal: SignalSender;
+  private readonly rtcConfiguration: RTCConfiguration;
   private readonly peers = new Map<string, RTCPeerConnection>();
   private localStream: MediaStream | null = null;
   private readonly remoteStreams = new Map<string, MediaStream>();
   private readonly listeners = new Set<(peerId: string, stream: MediaStream | null) => void>();
 
-  constructor(localId: string, sendSignal: SignalSender) {
+  constructor(
+    localId: string,
+    sendSignal: SignalSender,
+    rtcConfiguration: RTCConfiguration = DEFAULT_ICE
+  ) {
     this.localId = localId;
     this.sendSignal = sendSignal;
+    this.rtcConfiguration = rtcConfiguration;
   }
 
   onRemoteStream(cb: (peerId: string, stream: MediaStream | null) => void) {
@@ -128,7 +134,7 @@ export class WebRTCMesh {
   }
 
   private createPeerConnection(remoteId: string) {
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const pc = new RTCPeerConnection(this.rtcConfiguration);
 
     pc.onicecandidate = (ev) => {
       if (ev.candidate) {

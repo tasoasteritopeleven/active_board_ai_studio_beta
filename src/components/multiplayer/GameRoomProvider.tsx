@@ -1,5 +1,5 @@
 import { ReactNode, useMemo } from 'react';
-import { LiveObject } from '@liveblocks/client';
+import { LiveList, LiveObject } from '@liveblocks/client';
 import { RoomProvider } from '@liveblocks/react';
 import { liveblocksEnabled } from '@/lib/liveblocks/client';
 import { TelepresenceProvider } from '@/contexts/TelepresenceContext';
@@ -23,9 +23,10 @@ export function GameRoomProvider({
   const initialStorage = useMemo(() => {
     if (!withCatanStorage) return undefined;
     return {
-      catan: new LiveObject({
-        version: 0,
-        snapshot: '{}',
+      catanLog: new LiveList<string>([]),
+      catanCheckpoint: new LiveObject({
+        seq: 0,
+        snapshotJson: '',
         hostConnectionId: null as number | null,
       }),
     };
@@ -33,7 +34,7 @@ export function GameRoomProvider({
 
   if (!liveblocksEnabled) {
     return (
-      <TelepresenceProvider localUserId={localUserId}>{children}</TelepresenceProvider>
+      <TelepresenceProvider localUserId={localUserId} roomName={roomId}>{children}</TelepresenceProvider>
     );
   }
 
@@ -48,7 +49,7 @@ export function GameRoomProvider({
       }}
       initialStorage={initialStorage}
     >
-      <TelepresenceProvider localUserId={localUserId}>{children}</TelepresenceProvider>
+      <TelepresenceProvider localUserId={localUserId} roomName={roomId}>{children}</TelepresenceProvider>
     </RoomProvider>
   );
 }

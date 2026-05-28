@@ -4,7 +4,7 @@
  * territory markers, 3D army pieces, and interactive gameplay
  */
 
-import { useRef, useState, useMemo, Suspense, useEffect } from 'react';
+import { useRef, useState, useMemo, Suspense, useEffect, lazy } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   OrbitControls,
@@ -16,10 +16,11 @@ import {
   Billboard,
   Float,
 } from '@react-three/drei';
-import { EffectComposer, Bloom, DepthOfField, Vignette, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { type GameState, type Territory, CONTINENTS } from './RiskEngine';
 import { PresencePanel3D } from '@/components/game/PresencePanel3D';
+
+const RiskPostEffects = lazy(() => import('./RiskPostEffects'));
 
 // ============================================================================
 // FLAT MAP APPROACH — Like a real Risk board game on a table
@@ -559,12 +560,9 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
         );
       })}
 
-      {/* Post-processing Pipeline */}
-      <EffectComposer>
-        <Bloom luminanceThreshold={1.0} mipmapBlur intensity={0.1} />
-        <Vignette eskil={false} offset={0.02} darkness={0.6} />
-        <SMAA />
-      </EffectComposer>
+      <Suspense fallback={null}>
+        <RiskPostEffects />
+      </Suspense>
     </>
   );
 }
