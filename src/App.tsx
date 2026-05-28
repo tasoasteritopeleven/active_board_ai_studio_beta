@@ -18,6 +18,8 @@ const CodenamesGamePage = lazy(() => import('@/games/codenames/CodenamesGamePage
 const RiskGamePage = lazy(() => import('@/games/risk/RiskGamePage'));
 const PlayerDashboardPage = lazy(() => import('@/pages/PlayerDashboardPage'));
 const GameLobbyPage = lazy(() => import('@/pages/GameLobbyPage'));
+const OpsWebRTCPage = lazy(() => import('@/pages/ops/OpsWebRTCPage'));
+const OpsTelepresenceLabPage = lazy(() => import('@/pages/ops/OpsTelepresenceLabPage'));
 
 function PageLoader() {
   return (
@@ -49,6 +51,8 @@ export default function App() {
             <Route path="/games/catan" element={<CatanGamePage />} />
             <Route path="/games/codenames" element={<CodenamesGamePage />} />
             <Route path="/games/risk" element={<RiskGamePage />} />
+            <Route path="/ops/webrtc" element={<OpsWebRTCPage />} />
+            <Route path="/ops/telepresence" element={<OpsTelepresenceLabPage />} />
             <Route path="/player" element={<PlayerDashboardPage />} />
           </Routes>
         </Suspense>

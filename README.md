@@ -58,3 +58,8 @@ curl -X POST http://localhost:3001/api/ai/codenames-hint \
 ```
 
 Gemini keys stay on the server — the Vite client never receives `GEMINI_API_KEY`.
+
+
+## Production
+
+See [docs/PRODUCTION.md](docs/PRODUCTION.md) for coturn TLS, LiveKit SFU, event-sourcing, and E2E tests.

@@ -30,6 +30,8 @@ import { LifecyclePhase, ResourceType } from './domain/types';
 import { useCatanAI, AIPlayerConfig } from './ai/useCatanAI';
 import { DiceRollButton } from '@/components/game/DiceRollButton';
 import { VRSessionControls } from '@/components/xr/VRSessionControls';
+import { TableSessionBar } from '@/components/session/TableSessionBar';
+import { BoardTableShell } from '@/components/session/BoardTableShell';
 import { AudioSystem } from './core/AudioSystem';
 import { 
   GuidanceHUD, 
@@ -43,7 +45,7 @@ import {
   SetupPromptOverlay
 } from './components/GameUI';
 
-function CatanGamePageInner({ multiplayer }: { multiplayer?: { isInRoom: boolean; isHost: boolean; playerCount: number } }) {
+function CatanGamePageInner({ multiplayer }: { multiplayer?: { isInRoom: boolean; isHost: boolean; playerCount: number; eventLogLength?: number; roomLabel?: string } }) {
   const navigate = useNavigate();
   const { 
     players, 
@@ -84,6 +86,17 @@ function CatanGamePageInner({ multiplayer }: { multiplayer?: { isInRoom: boolean
 
   return (
     <div className="h-[100dvh] w-full bg-slate-950 overflow-hidden relative text-white selection:bg-primary/20">
+      <div className="absolute top-3 left-3 right-3 z-50 pointer-events-none">
+        <div className="max-w-lg mx-auto pointer-events-auto">
+          <TableSessionBar
+            gameTitle="Catan"
+            roomLabel={multiplayer?.roomLabel}
+            isHost={multiplayer?.isHost}
+            playerCount={multiplayer?.playerCount ?? 1}
+            eventLogLength={multiplayer?.eventLogLength}
+          />
+        </div>
+      </div>
 
       {phase === LifecyclePhase.GAME_OVER && winnerPlayerId && (
         <motion.div
@@ -475,6 +488,17 @@ function CatanGamePageWithSync() {
 }
 
 function LiveblocksCatanSync() {
-  const { isInRoom, isHost, playerCount } = useCatanMultiplayer(true);
-  return <CatanGamePageInner multiplayer={{ isInRoom, isHost, playerCount }} />;
+  const mp = useCatanMultiplayer(true);
+  const [params] = useSearchParams();
+  return (
+    <CatanGamePageInner
+      multiplayer={{
+        isInRoom: mp.isInRoom,
+        isHost: mp.isHost,
+        playerCount: mp.playerCount,
+        eventLogLength: mp.eventLogLength,
+        roomLabel: params.get('room') ?? undefined,
+      }}
+    />
+  );
 }

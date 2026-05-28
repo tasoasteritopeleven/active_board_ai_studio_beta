@@ -1,5 +1,6 @@
 import type { CatanEvent } from '../domain/events/catanEvent';
 import type { CommandId, EdgeId, EventId, HexId, PlayerId, VertexId } from '../domain/model/catanMatchState';
+import { LifecyclePhase } from '../domain/types';
 import type { CatanStoreSnapshot } from './catanStoreTypes';
 import type { CatanSyncSnapshot } from './catanSync';
 
@@ -120,11 +121,13 @@ export function deriveCatanEventsFromDiff(
 }
 
 /** Significant state change that should force a storage checkpoint. */
-export function shouldCheckpoint(prev: CatanStoreSnapshot, next: CatanStoreSnapshot): boolean {
-  return (
-    prev.phase !== next.phase ||
-    prev.setupPhase !== next.setupPhase ||
-    prev.winnerPlayerId !== next.winnerPlayerId ||
-    Object.keys(prev.players).length !== Object.keys(next.players).length
-  );
+export function shouldForceCheckpoint(
+  prev: CatanStoreSnapshot,
+  next: CatanStoreSnapshot
+): boolean {
+  if (prev.winnerPlayerId !== next.winnerPlayerId && next.winnerPlayerId) return true;
+  if (Object.keys(prev.players).length !== Object.keys(next.players).length) return true;
+  if (prev.setupPhase !== 'COMPLETED' && next.setupPhase === 'COMPLETED') return true;
+  if (prev.phase === LifecyclePhase.LOBBY && next.phase !== LifecyclePhase.LOBBY) return true;
+  return false;
 }

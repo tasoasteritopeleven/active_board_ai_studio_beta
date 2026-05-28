@@ -14,11 +14,12 @@ import {
   deriveCatanEventsFromDiff,
   parseLogEntry,
   serializeLogEntry,
-  shouldCheckpoint,
+  shouldForceCheckpoint,
   type CatanLogEntry,
 } from './catanEventLog';
+import { applyDomainEventToStore } from './catanDomainBridge';
 
-const CHECKPOINT_INTERVAL = 20;
+const CHECKPOINT_INTERVAL = 120;
 
 export function useCatanMultiplayer(roomEnabled: boolean) {
   const self = useSelf();
@@ -78,7 +79,7 @@ export function useCatanMultiplayer(roomEnabled: boolean) {
       applyCatanSnapshot(entry.snapshot);
       return;
     }
-    // Domain events are persisted for audit/replay; Zustand stays in sync via checkpoints + snapshots.
+    applyDomainEventToStore(entry.event);
   }, []);
 
   useEffect(() => {
@@ -121,9 +122,8 @@ export function useCatanMultiplayer(roomEnabled: boolean) {
 
       const domainEvents = deriveCatanEventsFromDiff(prev, state);
       const needsCheckpoint =
-        shouldCheckpoint(prev, state) ||
-        eventsSinceCheckpoint.current >= CHECKPOINT_INTERVAL ||
-        domainEvents.length === 0;
+        shouldForceCheckpoint(prev, state) ||
+        eventsSinceCheckpoint.current >= CHECKPOINT_INTERVAL;
 
       if (needsCheckpoint) {
         const snapshot = exportCatanSnapshot(state);

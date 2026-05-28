@@ -28,6 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiceRollButton } from '@/components/game/DiceRollButton';
+import { TableSessionBar } from '@/components/session/TableSessionBar';
 import { VRSessionControls } from '@/components/xr/VRSessionControls';
 import { useRiskGameActions } from './useRiskGameActions';
 
@@ -209,6 +210,10 @@ function RiskGamePageInner() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
+      <div className="absolute top-3 left-3 right-3 z-50">
+        <TableSessionBar gameTitle="Risk" className="max-w-md" />
+      </div>
+
       <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => navigate('/games')}>

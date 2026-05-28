@@ -1,5 +1,6 @@
 import express from 'express';
 import { buildIceServers } from './webrtc/iceServers.js';
+import { getWebRtcDiagnostics } from './webrtc/diagnostics.js';
 import { createLiveKitParticipantToken, isLiveKitConfigured } from './livekit/token.js';
 
 
@@ -94,6 +95,10 @@ The clue must be one word, uppercase, not matching any board word. Count is how 
 
 app.get('/api/webrtc/ice-servers', (_req, res) => {
   res.json({ iceServers: buildIceServers() });
+});
+
+app.get('/api/webrtc/diagnostics', (_req, res) => {
+  res.json(getWebRtcDiagnostics());
 });
 
 app.get('/api/livekit/status', (_req, res) => {
