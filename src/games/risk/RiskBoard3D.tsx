@@ -438,16 +438,6 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
       {/* Camera — top-down angled view like looking at a board game */}
       <PerspectiveCamera makeDefault position={[0, 32, 15]} fov={45} />
-      <OrbitControls 
-        enablePan 
-        enableZoom 
-        enableRotate 
-        minDistance={2} 
-        maxDistance={180} 
-        maxPolarAngle={Math.PI / 2.2} 
-        minPolarAngle={0.05}
-        makeDefault
-      />
 
       <color attach="background" args={['#0A0C10']} />
       <fog attach="fog" args={['#0A0C10', 45, 80]} />

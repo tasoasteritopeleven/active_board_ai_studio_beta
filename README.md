@@ -1,20 +1,56 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# TableForge
 
-# Run and deploy your AI Studio app
+**TableForge** is a VR-first web platform for remote board gaming. Play classic titles in immersive 3D with telepresence, real-time rooms (optional), and production-oriented architecture.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/d47b3d98-0073-4a94-acfc-14e2cdbcaf9e
+| Area | Status |
+|------|--------|
+| **Catan 3D** | Playable local MVP — dice, building, trade, robber, AI bots, **WebXR VR** |
+| **Risk 3D** | 3D world map, reinforce phases, **combat resolution**, continent bonuses, VR |
+| **Monopoly / Codenames** | Early UI shells |
+| **WebXR** | Enter VR on supported headsets (Chrome + Quest, etc.) |
+| **Telepresence** | Local webcam panels in 3D scene |
+| **Liveblocks** | Optional multiplayer rooms via `VITE_LIVEBLOCKS_PUBLIC_KEY` |
+| **PWA** | Installable manifest for tablets / venue kiosks |
 
-## Run Locally
+## Quick start
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+cp .env.example .env.local   # optional: GEMINI_API_KEY, VITE_LIVEBLOCKS_PUBLIC_KEY
+npm run dev
+```
 
+Open http://localhost:3000
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Environment
+
+| Variable | Purpose |
+|----------|---------|
+| `GEMINI_API_KEY` | Reserved for AI features (server-side proxy recommended) |
+| `VITE_LIVEBLOCKS_PUBLIC_KEY` | Enables Liveblocks `RoomProvider` for lobbies |
+| `APP_URL` | Hosted URL for OAuth callbacks |
+
+## Scripts
+
+- `npm run dev` — development server (port 3000)
+- `npm run build` — production build
+- `npm run lint` — TypeScript check
+- `npm run preview` — preview production build
+
+## Architecture
+
+- **React 19 + Vite 6 + TypeScript**
+- **React Three Fiber** + **Rapier** physics + **@react-three/xr** for WebXR
+- **Zustand** (Catan state) / React state (Risk)
+- **shadcn / Radix** UI, **Framer Motion**
+- Domain layer under `src/games/catan/domain/` (event reducers — integration in progress)
+
+## VR usage
+
+On a WebXR-capable browser and headset, open **Catan** or **Risk** and click **Είσοδος VR**. Desktop mouse/touch orbit controls remain available outside VR.
+
+## License
+
+See repository license. Game names (Catan, Risk, etc.) are trademarks of their respective owners; this project is an independent fan/technical demo.

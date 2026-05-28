@@ -1,5 +1,5 @@
 {
-  "name": "Catan 3D Telepresence",
-  "description": "Catan in 3D with telepresence video frames around the board.",
-  "requestFramePermissions": ["camera", "microphone"]
+  "name": "TableForge",
+  "description": "VR-first remote board gaming — Catan, Risk, and more in 3D with telepresence.",
+  "requestFramePermissions": ["camera", "microphone", "xr-spatial-tracking"]
 }

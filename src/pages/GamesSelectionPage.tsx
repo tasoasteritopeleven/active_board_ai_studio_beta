@@ -18,7 +18,7 @@ export default function GamesSelectionPage() {
           <p className="text-slate-400">Επιλέξτε μια μηχανή παιχνιδιού για να ξεκινήσετε τη συνεδρία σας.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {/* Catan Card */}
           <Card 
             className="bg-slate-900/50 border-slate-800 hover:border-orange-500/50 transition-all cursor-pointer group"
@@ -70,6 +70,38 @@ export default function GamesSelectionPage() {
               <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold">
                 Παίξτε Risk
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/monopoly')}
+          >
+            <CardHeader>
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Gamepad2 className="h-8 w-8 text-emerald-500" />
+              </div>
+              <CardTitle className="text-[19.2px] text-white">Monopoly</CardTitle>
+              <CardDescription className="text-slate-400">Κλασικό οικονομικό παιχνίδι — σε εξέλιξη.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Προεπισκόπηση</Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="bg-slate-900/50 border-slate-800 hover:border-violet-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/codenames')}
+          >
+            <CardHeader>
+              <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Gamepad2 className="h-8 w-8 text-violet-500" />
+              </div>
+              <CardTitle className="text-[19.2px] text-white">Codenames</CardTitle>
+              <CardDescription className="text-slate-400">Ομαδικό παιχνίδι λέξεων — σε εξέλιξη.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full mt-2 bg-violet-600 hover:bg-violet-700 text-white font-bold">Προεπισκόπηση</Button>
             </CardContent>
           </Card>
         </div>

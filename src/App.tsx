@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { TableForgeProviders } from '@/providers/TableForgeProviders';
 import LandingPage from '@/pages/LandingPage';
 import WaitlistPage from '@/pages/WaitlistPage';
 import LoginPage from '@/pages/LoginPage';
@@ -20,7 +20,7 @@ import GameLobbyPage from '@/pages/GameLobbyPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <TableForgeProviders>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
@@ -39,7 +39,7 @@ export default function App() {
           <Route path="/player" element={<PlayerDashboardPage />} />
         </Routes>
         <Toaster />
-      </AuthProvider>
+      </TableForgeProviders>
     </BrowserRouter>
   );
 }

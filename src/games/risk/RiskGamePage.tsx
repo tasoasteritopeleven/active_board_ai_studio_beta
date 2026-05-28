@@ -27,6 +27,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiceRollButton } from '@/components/game/DiceRollButton';
+import { VRSessionControls } from '@/components/xr/VRSessionControls';
+import { useRiskGameActions } from './useRiskGameActions';
 
 const AI_CONFIGS: AIPlayerConfig[] = [
   { id: 'p2', isAI: true, difficulty: 'Hard' },
@@ -191,31 +193,12 @@ export default function RiskGamePage() {
     });
   }, []);
 
-  const handleEndPhase = useCallback(() => {
-    setGameState(prev => {
-      const player = prev.players.find(p => p.id === prev.currentPlayerId);
-      if (prev.phase === 'reinforce' && player && player.armiesToPlace > 0) {
-        toast.error(`Έχετε ακόμα ${player.armiesToPlace} στρατεύματα για ανάπτυξη!`);
-        return prev;
-      }
-
-      const nextPhase = prev.phase === 'reinforce' ? 'attack' : prev.phase === 'attack' ? 'fortify' : 'reinforce';
-      
-      const phaseNames: Record<string, string> = {
-        'reinforce': 'ΕΝΙΣΧΥΣΗ',
-        'attack': 'ΕΠΙΘΕΣΗ',
-        'fortify': 'ΟΧΥΡΩΣΗ'
-      };
-
-      toast.info(`Η φάση άλλαξε σε ${phaseNames[nextPhase]}`);
-      
-      return {
-        ...prev,
-        phase: nextPhase,
-        log: [`Η φάση άλλαξε σε ${nextPhase}`, ...prev.log]
-      };
-    });
-  }, []);
+  const { handleTerritoryClick, handleExecuteAttack, handleEndPhase } = useRiskGameActions(
+    gameState,
+    setGameState,
+    selectedTerritory,
+    setSelectedTerritory
+  );
 
   useRiskAI(gameState, AI_CONFIGS, (action) => {
     console.log('AI Action:', action);
@@ -254,6 +237,7 @@ export default function RiskGamePage() {
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
+          <VRSessionControls compact />
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger render={
               <Button variant="ghost" size="icon" className="text-slate-400">
@@ -265,6 +249,7 @@ export default function RiskGamePage() {
                 gameState={gameState} 
                 selectedTerritory={selectedTerritory} 
                 onReinforce={handleReinforce}
+                onAttack={handleExecuteAttack}
               />
             </SheetContent>
           </Sheet>
@@ -278,7 +263,7 @@ export default function RiskGamePage() {
         <RiskBoard3D 
           gameState={gameState}
           selectedTerritory={selectedTerritory}
-          onTerritoryClick={setSelectedTerritory}
+          onTerritoryClick={handleTerritoryClick}
           onReinforce={handleReinforce}
         />
 
@@ -390,7 +375,11 @@ export default function RiskGamePage() {
                     )}
 
                     {gameState.phase === 'attack' && (
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20">
+                      <Button
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20"
+                        onClick={handleExecuteAttack}
+                        disabled={!gameState.attackingFrom}
+                      >
                         <Sword className="h-4 w-4 mr-2" />
                         ΕΠΙΘΕΣΗ
                       </Button>
@@ -406,7 +395,8 @@ export default function RiskGamePage() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-[90%] sm:w-auto px-4 sm:px-0">
           <Card className="bg-slate-900/90 backdrop-blur-xl border-slate-800 shadow-2xl">
             <CardContent className="p-2 flex items-center justify-between sm:justify-start gap-2">
-              <DiceRollButton onClick={() => toast.info("Dice rolling logic coming soon!")} className="flex-1 sm:flex-none" />
+              <DiceRollButton onClick={handleExecuteAttack} disabled={gameState.phase !== 'attack'} className="flex-1 sm:flex-none" />
+              <Button variant="secondary" className="hidden sm:flex font-bold uppercase text-[10px] tracking-widest" onClick={handleEndPhase}>Επόμενη Φάση</Button>
               <div className="w-px h-8 bg-slate-800 mx-1 sm:mx-2"></div>
               <Button variant="ghost" size="icon" className="text-slate-400">
                 <MessageSquare className="h-5 w-5" />
@@ -419,7 +409,7 @@ export default function RiskGamePage() {
   );
 }
 
-function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gameState: GameState, selectedTerritory: string | null, onReinforce: (id: string, amount: number) => void }) {
+function RiskSidebarContent({ gameState, selectedTerritory, onReinforce, onAttack }: { gameState: GameState, selectedTerritory: string | null, onReinforce: (id: string, amount: number) => void, onAttack: () => void }) {
   const territory = gameState.territories.find(t => t.id === selectedTerritory);
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
   
@@ -505,7 +495,11 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
               )}
 
               {gameState.phase === 'attack' && (
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20 uppercase tracking-widest">
+                <Button
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20 uppercase tracking-widest"
+                  onClick={onAttack}
+                  disabled={!gameState.attackingFrom}
+                >
                   <Sword className="h-4 w-4 mr-2" />
                   ΕΠΙΘΕΣΗ
                 </Button>

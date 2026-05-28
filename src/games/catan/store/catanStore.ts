@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { CatanMatchState, LifecyclePhase, PlayerId, ResourceType, TerrainType } from '../domain/types';
 import { generateTopology } from '../domain/boardGenerator';
 import { gameEvents } from '../core/EventBus';
+import { catanVictoryPatch } from './victory';
 import * as THREE from 'three';
 
 export interface FlowingResource {
@@ -58,6 +59,7 @@ interface CatanStore extends CatanMatchState {
   aiConfigs: any[];
   
   rollDice: () => void;
+  submitAllSetupRolls: (rolls?: Record<PlayerId, number>) => void;
   endTurn: () => void;
   buildSettlement: (vertexId: string) => void;
   buildRoad: (edgeId: string) => void;
@@ -101,6 +103,7 @@ interface CatanStore extends CatanMatchState {
   bankTrade: (give: ResourceType, get: ResourceType) => void;
   updatePlayerColor: (playerId: string, color: string) => void;
   addChatMessage: (text: string, playerId?: string) => void;
+  winnerPlayerId: PlayerId | null;
   setSetupPhase: (phase: 'NOT_STARTED' | 'DETERMINING_ORDER' | 'PLACING_FIRST' | 'PLACING_SECOND' | 'COMPLETED') => void;
 }
 
@@ -115,6 +118,15 @@ const INITIAL_PLAYERS: Record<string, any> = {
 
 const initialHexes = generateTopology(2);
 const desertHex = Object.values(initialHexes).find(h => h.terrain === 'DESERT');
+
+function applyVictoryIfNeeded(
+  players: CatanStore['players'],
+  currentTurnLog: LogEntry[],
+  patch: Record<string, unknown>
+) {
+  const victory = catanVictoryPatch(players, currentTurnLog);
+  return victory ? { ...patch, ...victory } : patch;
+}
 
 export const useCatanStore = create<CatanStore>((set) => ({
   phase: LifecyclePhase.LOBBY,
@@ -147,6 +159,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
   turnHistory: [],
   currentTurnLog: [],
   chatMessages: [],
+  winnerPlayerId: null,
 
   addChatMessage: (text, playerId) => set((state) => ({
     chatMessages: [
@@ -166,6 +179,8 @@ export const useCatanStore = create<CatanStore>((set) => ({
     resourceFlows: state.resourceFlows.filter(f => f.id !== id)
   })),
 
+  submitAllSetupRolls: (_rolls) => set((state) => state),
+
   rollDice: () => set((state) => {
     gameEvents.dispatch({ type: 'DICE_ROLL_STARTED' });
     
@@ -174,6 +189,10 @@ export const useCatanStore = create<CatanStore>((set) => ({
     const d2 = Math.floor(Math.random() * 6) + 1;
     const total = d1 + d2;
     const rollerId = state.activePlayerId;
+    const logs: LogEntry[] = [];
+    const nextPlayers = JSON.parse(JSON.stringify(state.players)) as CatanStore['players'];
+    const nextBankInventory = { ...state.bankInventory };
+    const flows: FlowingResource[] = [];
 
     setTimeout(() => {
       gameEvents.dispatch({ type: 'DICE_SETTLED', result: [d1, d2] });
@@ -185,7 +204,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
       
       setTimeout(() => {
         const s = useCatanStore.getState();
-        let nextState: Partial<CatanState> = {
+        let nextState: Partial<CatanStore> = {
           setupRolls: nextRolls,
           currentTurnLog: [...s.currentTurnLog, { 
             playerId: rollerId, 
@@ -514,7 +533,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
     const buildLog = `Χτίστηκε ${type}.`;
 
     if (type === 'SETTLEMENT' || type === 'CITY') {
-      return {
+      const settlementPatch = {
         players: nextPlayers,
         vertices: {
           ...state.vertices,
@@ -528,6 +547,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
         pendingBuild: null,
         currentTurnLog: [...state.currentTurnLog, { playerId: state.activePlayerId, action: buildLog, timestamp: Date.now() }]
       };
+      return applyVictoryIfNeeded(nextPlayers, settlementPatch.currentTurnLog, settlementPatch);
     } else if (type === 'ROAD') {
       const newState: any = {
         players: nextPlayers,
@@ -570,7 +590,7 @@ export const useCatanStore = create<CatanStore>((set) => ({
         }
       }
 
-      return newState;
+      return applyVictoryIfNeeded(nextPlayers, newState.currentTurnLog as LogEntry[], newState);
     }
     return state;
   }),

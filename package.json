@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "tableforge",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -69,5 +69,6 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
-  }
+  },
+  "description": "TableForge - VR-first remote board gaming platform"
 }

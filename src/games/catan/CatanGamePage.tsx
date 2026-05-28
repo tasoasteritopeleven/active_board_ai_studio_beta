@@ -26,6 +26,7 @@ import { useCatanStore } from './store/catanStore';
 import { LifecyclePhase, ResourceType } from './domain/types';
 import { useCatanAI, AIPlayerConfig } from './ai/useCatanAI';
 import { DiceRollButton } from '@/components/game/DiceRollButton';
+import { VRSessionControls } from '@/components/xr/VRSessionControls';
 import { AudioSystem } from './core/AudioSystem';
 import { 
   GuidanceHUD, 
@@ -53,7 +54,8 @@ export default function CatanGamePage() {
     currentTurnLog,
     rollDice,
     endTurn,
-    bankInventory
+    bankInventory,
+    winnerPlayerId,
   } = useCatanStore();
 
   const [showCatanSetup, setShowCatanSetup] = useState(true);
@@ -79,6 +81,27 @@ export default function CatanGamePage() {
 
   return (
     <div className="h-[100dvh] w-full bg-slate-950 overflow-hidden relative text-white selection:bg-primary/20">
+
+      {phase === LifecyclePhase.GAME_OVER && winnerPlayerId && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-[60] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6"
+        >
+          <div className="text-center space-y-6 max-w-md">
+            <Trophy className="w-16 h-16 text-primary mx-auto" />
+            <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Τέλος Παιχνιδιού</h2>
+            <p className="text-slate-300">
+              Νικητής: <span className="text-primary font-bold">{players[winnerPlayerId]?.name}</span>
+              {' '}({players[winnerPlayerId]?.victoryPoints} ΠΝ)
+            </p>
+            <Button onClick={() => navigate('/games')} className="bg-primary text-white">
+              Επιστροφή στα Παιχνίδια
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       <AnimatePresence>
         <ActivePlayerRollOverlay key="active-roll" />
         {phase === LifecyclePhase.LOBBY && showCatanSetup && (
