@@ -112,6 +112,7 @@ function TerritoryPiece({ territory, playerColor, continentColor, isSelected, is
     const result = [];
     let index = 0;
     const total = art + cav + inf;
+    if (total === 0) return result;
     
     // Radius for scatter
     const scatterRadius = Math.min(1.0, 0.4 + total * 0.1);
@@ -414,6 +415,7 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
       {/* Camera — top-down angled view like looking at a board game */}
       <PerspectiveCamera makeDefault position={[0, 32, 15]} fov={45} />
+      <OrbitControls makeDefault minDistance={10} maxDistance={80} maxPolarAngle={Math.PI / 2.1} />
 
       <color attach="background" args={['#0A0C10']} />
       <fog attach="fog" args={['#0A0C10', 45, 80]} />

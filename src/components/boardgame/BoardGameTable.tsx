@@ -9,8 +9,8 @@ interface BoardGameTableProps {
 /** Wood table + spotlight — frames any physical board component */
 export function BoardGameTable({ children, className }: BoardGameTableProps) {
   return (
-    <div className={`boardgame-table ${className ?? ''}`}>
-      <div className="boardgame-table-surface">{children}</div>
+    <div className={`boardgame-table flex flex-col items-center justify-center ${className ?? ''}`}>
+      <div className="boardgame-table-surface w-full h-full flex flex-col">{children}</div>
     </div>
   );
 }

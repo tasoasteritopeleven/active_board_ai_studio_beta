@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TableForge.Core;
+
 using UnityEngine;
 
 namespace TableForge.Games
@@ -108,6 +109,8 @@ namespace TableForge.Games
             _pawn.transform.SetParent(_boardRoot, false);
             _pawn.transform.localScale = new Vector3(0.18f, 0.12f, 0.18f);
             _pawn.GetComponent<Renderer>().material = TableForgeMaterials.Create(Color.red, 0.6f, 0.15f);
+
+            TableForgeBoardLabels.CreateLabel("MONOPOLY", new Vector3(0f, 0.08f, 0f), 0.35f, new Color(0.98f, 0.92f, 0.75f), _boardRoot);
         }
 
         private void PlacePawn(int index, Color color)

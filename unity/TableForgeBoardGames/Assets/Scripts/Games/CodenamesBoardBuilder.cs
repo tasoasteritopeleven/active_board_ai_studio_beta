@@ -12,9 +12,24 @@ namespace TableForge.Games
 
         private void Start() => BuildBoard();
 
+        private readonly List<Transform> _cardRoots = new();
+
         public void ApplyState(string json)
         {
             if (_cardRenderers.Count < 25) return;
+
+            for (var i = 0; i < 25 && i < _cardRoots.Count; i++)
+            {
+                var word = ExtractWord(json, i);
+                if (!string.IsNullOrEmpty(word) && _cardRoots[i] != null)
+                {
+                    foreach (Transform child in _cardRoots[i])
+                        if (child.name.StartsWith("Label_")) Destroy(child.gameObject);
+                    TableForgeBoardLabels.CreateLabel(word.Length > 8 ? word.Substring(0, 8) : word,
+                        new Vector3(0f, 0.02f, 0f), 0.08f, new Color(0.15f, 0.12f, 0.1f), _cardRoots[i]);
+                }
+            }
+
 
             // Expect optional arrays in state: types[], revealed[]
             for (var i = 0; i < 25; i++)
@@ -50,6 +65,7 @@ namespace TableForge.Games
                 var rend = card.GetComponent<Renderer>();
                 rend.material = TableForgeMaterials.PaperCard;
                 _cardRenderers.Add(rend);
+                _cardRoots.Add(card.transform);
             }
 
             var key = GameObject.CreatePrimitive(PrimitiveType.Cube);

@@ -38,14 +38,22 @@ function DieFace({ value, rolling }: { value: number; rolling: boolean }) {
 interface PhysicalDiceProps {
   onRoll?: (a: number, b: number) => void;
   className?: string;
+  values?: [number, number];
+  rolling?: boolean;
 }
 
-export function PhysicalDice({ onRoll, className }: PhysicalDiceProps) {
+export function PhysicalDice({ onRoll, className, values, rolling: controlledRolling }: PhysicalDiceProps) {
   const [a, setA] = useState(1);
   const [b, setB] = useState(1);
   const [rolling, setRolling] = useState(false);
 
+  const isRolling = controlledRolling ?? rolling;
+  const valA = values ? values[0] : a;
+  const valB = values ? values[1] : b;
+
   const roll = () => {
+    if (controlledRolling !== undefined && values) return;
+    if (!onRoll) return;
     setRolling(true);
     setTimeout(() => {
       const na = 1 + Math.floor(Math.random() * 6);
@@ -53,7 +61,7 @@ export function PhysicalDice({ onRoll, className }: PhysicalDiceProps) {
       setA(na);
       setB(nb);
       setRolling(false);
-      onRoll?.(na, nb);
+      onRoll(na, nb);
     }, 520);
   };
 
@@ -62,9 +70,10 @@ export function PhysicalDice({ onRoll, className }: PhysicalDiceProps) {
       type="button"
       onClick={roll}
       className={`boardgame-dice-tray flex items-center gap-3 px-4 py-2 ${className ?? ''}`}
+      style={{ cursor: onRoll ? 'pointer' : 'default' }}
     >
-      <DieFace value={a} rolling={rolling} />
-      <DieFace value={b} rolling={rolling} />
+      <DieFace value={valA} rolling={isRolling} />
+      <DieFace value={valB} rolling={isRolling} />
     </button>
   );
 }

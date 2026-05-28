@@ -9,6 +9,7 @@ namespace TableForge.Games
     {
         private Transform _root;
         private readonly Dictionary<string, Renderer> _territoryRenderers = new();
+        private readonly Dictionary<string, GameObject> _armyMarkers = new();
 
         private static readonly (string id, Vector3 pos, Vector3 scale, string hex)[] Plates =
         {
@@ -24,18 +25,51 @@ namespace TableForge.Games
 
         public void ApplyState(string json)
         {
-            // territories:[{id,ownerId,armies}]
             foreach (var kv in _territoryRenderers)
             {
                 var owner = ExtractOwnerForId(json, kv.Key);
+                var armies = ExtractArmiesForId(json, kv.Key);
                 if (string.IsNullOrEmpty(owner))
-                {
                     kv.Value.material.color = new Color(0.5f, 0.5f, 0.52f);
-                    continue;
+                else
+                {
+                    var hue = Mathf.Abs(owner.GetHashCode() % 360) / 360f;
+                    kv.Value.material.color = Color.HSVToRGB(hue, 0.55f, 0.75f);
                 }
-                var hue = Mathf.Abs(owner.GetHashCode() % 360) / 360f;
-                kv.Value.material.color = Color.HSVToRGB(hue, 0.55f, 0.75f);
+                UpdateArmyMarker(kv.Key, armies, owner);
             }
+        }
+
+        private void UpdateArmyMarker(string id, int armies, string owner)
+        {
+            if (!_armyMarkers.TryGetValue(id, out var marker) || marker == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                marker.name = $"Armies_{id}";
+                marker.transform.SetParent(_root, false);
+                _armyMarkers[id] = marker;
+            }
+            var count = Mathf.Clamp(armies, 1, 30);
+            marker.transform.localScale = new Vector3(0.06f + count * 0.004f, 0.04f + count * 0.006f, 0.06f + count * 0.004f);
+            var plate = _territoryRenderers.TryGetValue(id, out var plateRenderer) && plateRenderer != null ? plateRenderer : null;
+            if (plate != null)
+                marker.transform.position = plate.transform.position + Vector3.up * 0.06f;
+            var hue = string.IsNullOrEmpty(owner) ? 0.6f : Mathf.Abs(owner.GetHashCode() % 360) / 360f;
+            marker.GetComponent<Renderer>().material = TableForgeMaterials.Create(Color.HSVToRGB(hue, 0.5f, 0.9f), 0.5f, 0.2f);
+        }
+
+        private static int ExtractArmiesForId(string json, string id)
+        {
+            var chunk = $"\"id\":\"{id}\"";
+            var idx = json.IndexOf(chunk, System.StringComparison.Ordinal);
+            if (idx < 0) return 1;
+            var armiesNeedle = "\"armies\":";
+            var aIdx = json.IndexOf(armiesNeedle, idx, System.StringComparison.Ordinal);
+            if (aIdx < 0 || aIdx > idx + 120) return 1;
+            aIdx += armiesNeedle.Length;
+            var end = aIdx;
+            while (end < json.Length && char.IsDigit(json[end])) end++;
+            return int.TryParse(json.Substring(aIdx, end - aIdx), out var v) ? v : 1;
         }
 
         private void BuildBoard()
