@@ -12,7 +12,6 @@ import {
   PerspectiveCamera,
   Html,
   Environment,
-  useTexture,
   Billboard,
   Float,
 } from '@react-three/drei';
@@ -408,9 +407,6 @@ interface BoardContentProps {
 }
 
 function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinforce, isLayoutMode }: BoardContentProps) {
-  // High-resolution stylized world map for Risk feel
-  const mapTexture = useTexture('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2066&auto=format&fit=crop');
-  
   const getPlayerColor = (pid: string | null) => {
     if (!pid) return '#666666';
     return gameState.players.find(p => p.id === pid)?.color || '#666666';
@@ -453,9 +449,8 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[54, 36]} />
         <meshStandardMaterial 
-          map={mapTexture} 
-          color="#ffffff" 
-          roughness={0.7} 
+          color="#A8D0E6" 
+          roughness={0.9} 
           metalness={0.02}
         />
       </mesh>
