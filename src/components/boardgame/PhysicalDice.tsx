@@ -1,76 +1,70 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 
-const PIP_LAYOUTS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [
-    [72, 28],
-    [28, 72],
-  ],
-  3: [
-    [72, 28],
-    [50, 50],
-    [28, 72],
-  ],
-  4: [
-    [28, 28],
-    [72, 28],
-    [28, 72],
-    [72, 72],
-  ],
-  5: [
-    [28, 28],
-    [72, 28],
-    [50, 50],
-    [28, 72],
-    [72, 72],
-  ],
-  6: [
-    [28, 28],
-    [72, 28],
-    [28, 50],
-    [72, 50],
-    [28, 72],
-    [72, 72],
-  ],
+const PIP_LAYOUT: Record<number, number[][]> = {
+  1: [[1, 1]],
+  2: [[0, 0], [2, 2]],
+  3: [[0, 0], [1, 1], [2, 2]],
+  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+  6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
 };
 
-function DieFace({ value, className }: { value: number; className?: string }) {
-  const pips = PIP_LAYOUTS[Math.min(6, Math.max(1, value))] ?? PIP_LAYOUTS[1];
-
+function DieFace({ value, rolling }: { value: number; rolling: boolean }) {
+  const pips = PIP_LAYOUT[value] ?? PIP_LAYOUT[1];
   return (
-    <div
-      className={`relative w-10 h-10 rounded-lg bg-gradient-to-br from-white to-zinc-100 border border-zinc-300/80 shadow-[3px_4px_0_#a8a29e,inset_0_1px_2px_#fff] ${className ?? ''}`}
+    <motion.div
+      className="relative w-11 h-11 rounded-lg bg-gradient-to-br from-[#fffef9] to-[#e8e0d0] border border-[#c9b896] shadow-md"
+      animate={rolling ? { rotateX: [0, 360], rotateY: [0, 360] } : {}}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
     >
-      {pips.map(([left, top], i) => (
-        <span
-          key={i}
-          className="absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-900 shadow-sm"
-          style={{ left: `${left}%`, top: `${top}%` }}
-        />
-      ))}
-    </div>
+      <div className="absolute inset-1 grid grid-cols-3 grid-rows-3 gap-0.5 p-0.5">
+        {Array.from({ length: 9 }).map((_, i) => {
+          const row = Math.floor(i / 3);
+          const col = i % 3;
+          const show = pips.some(([r, c]) => r === row && c === col);
+          return (
+            <div
+              key={i}
+              className={`rounded-full ${show ? 'bg-[#1a1a1a]' : 'bg-transparent'}`}
+            />
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }
 
-export function PhysicalDice({
-  values,
-  rolling,
-}: {
-  values: [number, number];
-  rolling?: boolean;
-}) {
-  const style = useMemo(
-    () => ({
-      transform: rolling ? 'rotate(8deg) translateY(-2px)' : 'rotate(-4deg)',
-      transition: 'transform 0.2s ease',
-    }),
-    [rolling]
-  );
+interface PhysicalDiceProps {
+  onRoll?: (a: number, b: number) => void;
+  className?: string;
+}
+
+export function PhysicalDice({ onRoll, className }: PhysicalDiceProps) {
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(1);
+  const [rolling, setRolling] = useState(false);
+
+  const roll = () => {
+    setRolling(true);
+    setTimeout(() => {
+      const na = 1 + Math.floor(Math.random() * 6);
+      const nb = 1 + Math.floor(Math.random() * 6);
+      setA(na);
+      setB(nb);
+      setRolling(false);
+      onRoll?.(na, nb);
+    }, 520);
+  };
 
   return (
-    <div className="flex items-center justify-center gap-2.5 py-1" style={style}>
-      <DieFace value={values[0]} />
-      <DieFace value={values[1]} />
-    </div>
+    <button
+      type="button"
+      onClick={roll}
+      className={`boardgame-dice-tray flex items-center gap-3 px-4 py-2 ${className ?? ''}`}
+    >
+      <DieFace value={a} rolling={rolling} />
+      <DieFace value={b} rolling={rolling} />
+    </button>
   );
 }

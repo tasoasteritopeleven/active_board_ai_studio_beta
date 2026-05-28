@@ -1,91 +1,73 @@
-/* TableForge — physical board-game materials (paper, felt, wood) */
+/* Physical tabletop presentation — wood, felt, paper stock */
 
-.bg-wood-table {
-  background-color: #2a1c10;
-  background-image:
-    radial-gradient(ellipse 120% 80% at 50% 120%, rgba(212, 175, 55, 0.12), transparent 55%),
-    repeating-linear-gradient(
-      92deg,
-      rgba(255, 255, 255, 0.02) 0px,
-      transparent 2px,
-      transparent 8px
-    ),
-    linear-gradient(165deg, #3d2a18 0%, #1a1008 45%, #2c1e12 100%);
+.boardgame-table {
+  --wood-dark: #2a1810;
+  --wood-mid: #4a2f1a;
+  --wood-light: #6b4423;
+  --felt-green: #0d4a2e;
+  --felt-codenames: #1a4d32;
+  --paper: #f5ecd8;
+  --paper-edge: #c9b896;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1a2332 0%, #0a0e14 70%);
+  overflow: hidden;
 }
 
-.bg-felt-green {
-  background-color: #1a5c3a;
-  background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.06), transparent 50%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/%3E%3C/svg%3E");
-}
-
-.bg-board-paper {
-  background-color: #f3e6c8;
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 40%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
-}
-
-.bg-monopoly-green {
-  background-color: #0f5c32;
-  background-image:
-    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.12), transparent 55%),
-    linear-gradient(145deg, #0a4a28 0%, #1a7a45 50%, #084422 100%);
-}
-
-.board-fold-shadow {
-  box-shadow:
-    0 2px 0 #c9b896,
-    0 8px 24px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-.card-stock {
-  background: linear-gradient(145deg, #f8f0dc 0%, #e8d9b8 45%, #dcc9a0 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 4px 0 #b8a88a,
-    0 10px 20px rgba(0, 0, 0, 0.25);
-}
-
-.card-stock::before {
+.boardgame-table::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, transparent 42%);
-  pointer-events: none;
+  inset: 8%;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--wood-light), var(--wood-dark));
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.65),
+    inset 0 2px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.35);
 }
 
-.board-perspective {
-  perspective: 1200px;
+.boardgame-table-surface {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
 }
 
-.board-tilt {
-  transform: rotateX(8deg);
+.boardgame-felt {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.06), transparent 40%),
+    linear-gradient(160deg, #0f5a38, var(--felt-green) 45%, #083d25);
+  border: 3px solid rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.25);
+}
+
+.boardgame-paper-tile {
+  background: linear-gradient(180deg, #fff9ee, var(--paper));
+  border: 1px solid var(--paper-edge);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.boardgame-card-stock {
+  background: linear-gradient(165deg, #fffef8, #ebe4d0);
+  border: 1px solid #c5bc9e;
+  box-shadow:
+    0 2px 0 #fff inset,
+    0 4px 12px rgba(0, 0, 0, 0.25);
   transform-style: preserve-3d;
 }
 
-@keyframes card-reveal-flip {
-  from {
-    transform: rotateY(90deg) scale(0.95);
-    opacity: 0.6;
-  }
-  to {
-    transform: rotateY(0deg) scale(1);
-    opacity: 1;
-  }
+.boardgame-pawn {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
 }
 
-.card-revealed-animate {
-  animation: card-reveal-flip 0.35s ease-out;
-}
-
-.risk-table-frame {
-  box-shadow:
-    inset 0 0 0 14px #3d2914,
-    inset 0 0 0 16px #5c4028,
-    inset 0 0 0 18px #2a1c10,
-    0 24px 80px rgba(0, 0, 0, 0.7);
+.boardgame-dice-tray {
+  background: linear-gradient(180deg, #3d2818, #26180f);
+  border: 2px solid #5c3d24;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
 }

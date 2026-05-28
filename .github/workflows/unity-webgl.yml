@@ -1,0 +1,48 @@
+name: Unity WebGL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'cursor/**']
+    paths:
+      - 'unity/TableForgeBoardGames/**'
+      - '.github/workflows/unity-webgl.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: unity/TableForgeBoardGames/Library
+          key: Library-TableForge-${{ hashFiles('unity/TableForgeBoardGames/**') }}
+          restore-keys: |
+            Library-TableForge-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity/TableForgeBoardGames
+          targetPlatform: WebGL
+          buildName: TableForge
+          customParameters: -executeMethod TableForge.Editor.TableForgeCIBuild.BuildWebGLFromCommandLine
+
+      - name: Copy WebGL to public
+        run: |
+          mkdir -p public/unity/TableForge/Build
+          cp -r unity/TableForgeBoardGames/Build/WebGL/* public/unity/TableForge/Build/ || true
+          ls -la public/unity/TableForge/Build/ || echo "No WebGL artifacts (Unity license may be missing)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tableforge-webgl
+          path: public/unity/TableForge/Build
+          if-no-files-found: warn

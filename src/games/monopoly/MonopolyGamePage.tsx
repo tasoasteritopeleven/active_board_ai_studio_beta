@@ -1,155 +1,127 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, DollarSign, Building2, History } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { BoardGameTable } from '@/components/boardgame/BoardGameTable';
-import { PhysicalDice } from '@/components/boardgame/PhysicalDice';
-import { MonopolyBoardVisual } from './components/MonopolyBoardVisual';
 import {
-  buyProperty,
-  createMonopolyGame,
-  declineBuy,
-  endTurn,
-  rollDice,
-  type MonopolyState,
-} from './monopolyEngine';
-import { BOARD } from './monopolyEngine';
+  Building2,
+  ChevronLeft,
+  DollarSign,
+  History,
+  Settings,
+  MessageSquare,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { UnityBoardCanvas } from '@/components/unity/UnityBoardCanvas';
+import { MonopolyBoardVisual } from './components/MonopolyBoardVisual';
 
 export default function MonopolyGamePage() {
   const navigate = useNavigate();
-  const [game, setGame] = useState<MonopolyState>(() => createMonopolyGame(4));
-  const [rolling, setRolling] = useState(false);
+  const [balance] = useState(1500);
+  const [position, setPosition] = useState(0);
+  const [properties] = useState([
+    { name: 'Boardwalk', color: 'bg-blue-600', price: 400 },
+    { name: 'Park Place', color: 'bg-blue-600', price: 350 },
+    { name: 'Illinois Ave', color: 'bg-red-600', price: 240 },
+  ]);
 
-  const current = game.players.find((p) => p.id === game.currentPlayerId)!;
-  const space = BOARD[current.position];
-  const owned = Object.values(game.properties).filter((p) => p.ownerId === current.id);
-
-  const handleRoll = () => {
-    setRolling(true);
-    setGame((g) => rollDice(g));
-    setTimeout(() => setRolling(false), 400);
+  const boardState = {
+    position,
+    playerColor: '#ef4444',
+    houses: { 39: 2, 37: 1 } as Record<number, number>,
   };
 
-  const centerControls = (
-    <div className="space-y-2 text-center">
-      <p className="text-[9px] text-emerald-100/80 font-bold uppercase tracking-[0.2em]">
-        {current.name}
-      </p>
-      {game.lastRoll ? (
-        <PhysicalDice values={game.lastRoll} rolling={rolling} />
-      ) : (
-        <div className="h-12 flex items-center justify-center text-emerald-200/50 text-[10px] uppercase">
-          Ρίξτε τα ζάρια
-        </div>
-      )}
-      <div className="flex flex-col gap-1.5">
-        {game.phase === 'roll' && (
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-500 text-white font-black text-xs h-9 shadow-lg border-b-2 border-red-800"
-            onClick={handleRoll}
-          >
-            ΡΙΞΕ ΖΑΡΙΑ
-          </Button>
-        )}
-        {game.phase === 'buy' && space.price && (
-          <>
-            <Button size="sm" className="text-xs h-8 font-bold" onClick={() => setGame((g) => buyProperty(g))}>
-              Αγορά ${space.price}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs h-8 border-emerald-200/30 text-emerald-50"
-              onClick={() => setGame((g) => declineBuy(g))}
-            >
-              Πέρασμα
-            </Button>
-          </>
-        )}
-        {game.phase === 'end' && (
-          <Button size="sm" variant="secondary" className="text-xs h-8" onClick={() => setGame((g) => endTurn(g))}>
-            Τέλος γύρου
-          </Button>
-        )}
-      </div>
-      {game.winnerId && (
-        <p className="text-amber-200 text-xs font-bold">
-          Νικητής: {game.players.find((p) => p.id === game.winnerId)?.name}
-        </p>
-      )}
-    </div>
-  );
+  const handleRoll = (d1: number, d2: number) => {
+    setPosition((p) => (p + d1 + d2) % 40);
+  };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#0c0a08] overflow-hidden">
-      <header className="h-11 shrink-0 border-b border-amber-900/30 bg-[#1a1208]/95 flex items-center justify-between px-3 z-20">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-200/70" onClick={() => navigate('/games')}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="text-xs font-bold text-amber-100 uppercase tracking-[0.25em]">Monopoly</span>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-700/40 text-emerald-100">
-            <DollarSign className="h-3 w-3" />
-            <span className="font-mono font-bold text-sm">${current.money}</span>
+    <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
+      <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => navigate('/games')}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-sm font-bold text-white uppercase tracking-widest">Monopoly: Classic</h1>
+            <p className="text-[10px] text-slate-500 font-mono">SESSION: #MONO-42</p>
           </div>
-          <Sheet>
-            <SheetTrigger
-              render={
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-200/70">
-                  <Building2 className="h-4 w-4" />
-                </Button>
-              }
-            />
-            <SheetContent side="right" className="w-72 bg-[#1a1208] border-amber-900/30 text-amber-50">
-              <h3 className="text-xs uppercase tracking-widest text-amber-500/80 font-bold mb-3">Χαρτοφυλάκιο</h3>
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-                {owned.length === 0 && <p className="text-xs text-amber-200/50">Καμία ιδιοκτησία.</p>}
-                {owned.map((p) => (
-                  <div key={p.spaceIndex} className="p-2 rounded-lg bg-amber-950/30 border border-amber-800/20 text-xs">
-                    <div className="h-1 rounded-full mb-1" style={{ backgroundColor: BOARD[p.spaceIndex].color }} />
-                    {BOARD[p.spaceIndex].name}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-amber-900/30">
-                <p className="text-[10px] uppercase text-amber-500/70 mb-2 flex items-center gap-1">
-                  <History className="w-3 h-3" /> Αρχείο
-                </p>
-                <div className="text-[10px] text-amber-200/60 space-y-1 max-h-32 overflow-y-auto">
-                  {game.log.slice(-8).map((line, i) => (
-                    <div key={i}>{line}</div>
-                  ))}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-500">
+            <DollarSign className="h-4 w-4" />
+            <span className="text-lg font-mono font-bold">${balance}</span>
+          </div>
+          <div className="flex items-center -space-x-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white"
+              >
+                P{i}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Button variant="ghost" size="icon" className="text-slate-400">
+          <Settings className="h-5 w-5" />
+        </Button>
       </header>
 
-      <BoardGameTable className="flex-1" tilt>
-        <div className="w-full h-full overflow-auto flex items-center justify-center py-4">
-          <MonopolyBoardVisual game={game}>{centerControls}</MonopolyBoardVisual>
+      <div className="flex-1 flex relative min-h-0">
+        <div className="flex-1 relative min-h-0">
+          <UnityBoardCanvas
+            game="monopoly"
+            state={boardState}
+            className="absolute inset-0"
+            fallback={<MonopolyBoardVisual state={boardState} onRoll={handleRoll} />}
+          />
         </div>
-      </BoardGameTable>
 
-      <footer className="shrink-0 h-9 border-t border-amber-900/20 flex items-center justify-center gap-5 px-4 bg-[#1a1208]/90 z-20">
-        {game.players
-          .filter((p) => !p.bankrupt)
-          .map((p) => (
-            <div
-              key={p.id}
-              className={`flex items-center gap-1.5 text-[10px] ${p.id === game.currentPlayerId ? 'opacity-100' : 'opacity-45'}`}
-            >
+        <aside className="w-80 border-l border-slate-800 bg-slate-900/50 backdrop-blur-md flex flex-col shrink-0 z-10">
+          <div className="p-4 border-b border-slate-800">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-primary" />
+              My Portfolio
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            {properties.map((prop) => (
               <div
-                className="w-2.5 h-2.5 rounded-full border border-white/30 shadow-sm"
-                style={{ backgroundColor: p.color }}
-              />
-              <span className="text-amber-100/90">{p.name.split(' ')[0]}</span>
+                key={prop.name}
+                className="p-3 rounded-lg bg-slate-950 border border-slate-800 hover:border-primary/30 transition-colors"
+              >
+                <div className={`h-2 w-full rounded-full ${prop.color} mb-3`} />
+                <div className="flex justify-between items-center">
+                  <p className="font-bold text-white text-sm">{prop.name}</p>
+                  <p className="text-xs font-mono text-primary">${prop.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="p-4 border-t border-slate-800 bg-slate-950/50">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs text-slate-500 uppercase font-bold">Game Log</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <History className="h-4 w-4" />
+              </Button>
             </div>
-          ))}
-      </footer>
+            <div className="space-y-2 max-h-32 overflow-y-auto text-[10px] font-mono">
+              <p className="text-slate-400">
+                <span className="text-primary">P1</span> on space {position}
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div className="lg:hidden absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+        <Button size="icon" className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800">
+          <Building2 className="h-6 w-6" />
+        </Button>
+        <Button size="icon" className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800">
+          <MessageSquare className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 }
