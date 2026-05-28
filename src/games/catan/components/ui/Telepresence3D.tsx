@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { useCatanStore } from '../../store/catanStore';
 import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTelepresenceOptional } from '@/contexts/TelepresenceContext';
 import * as THREE from 'three';
 
 const SLOT_RADIUS = 22;
@@ -80,45 +81,22 @@ function PlayerCamera3D({
   const { players, activePlayerId, setupPhase, setupRolls } = useCatanStore();
   const player = players[playerId];
   const isActive = activePlayerId === playerId;
-  
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const telepresence = useTelepresenceOptional();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (isVideoEnabled || isAudioEnabled) {
-      navigator.mediaDevices.getUserMedia({ 
-        video: isVideoEnabled, 
-        audio: isAudioEnabled 
-      })
-      .then(s => setStream(s))
-      .catch(err => {
-        console.warn("Could not access media devices for " + playerId + ". Ensure permissions are granted.");
-        setIsVideoEnabled(false);
-        setIsAudioEnabled(false);
-      });
-    } else {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        setStream(null);
-      }
-    }
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isVideoEnabled, isAudioEnabled]);
+  const isVideoEnabled = isLocal ? (telepresence?.isVideoEnabled ?? false) : false;
+  const isAudioEnabled = isLocal ? (telepresence?.isAudioEnabled ?? false) : false;
+  const stream = isLocal
+    ? telepresence?.localStream ?? null
+    : telepresence?.getRemoteStream(playerId) ?? null;
+  const showVideo = Boolean(stream) && (isLocal ? isVideoEnabled : true);
 
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
+    if (videoRef.current) videoRef.current.srcObject = stream;
   }, [stream]);
 
-  const toggleVideo = () => setIsVideoEnabled(!isVideoEnabled);
-  const toggleAudio = () => setIsAudioEnabled(!isAudioEnabled);
+  const toggleVideo = () => { if (isLocal) telepresence?.toggleVideo(); };
+  const toggleAudio = () => { if (isLocal) telepresence?.toggleAudio(); };
   
   const groupRef = useRef<THREE.Group>(null);
   const targetPos = useRef(position.clone());
@@ -175,7 +153,7 @@ function PlayerCamera3D({
             </div>
           )}
 
-          {stream && isVideoEnabled ? (
+          {showVideo ? (
             <video 
               ref={videoRef} 
               autoPlay 
@@ -195,8 +173,8 @@ function PlayerCamera3D({
             </div>
           )}
 
-          {/* Controls for all for testing */}
-          <div className={`absolute ${isLocal ? 'bottom-2' : 'top-2'} ${isLocal ? 'left-1/2 -translate-x-1/2' : 'right-2'} flex items-center gap-1 bg-slate-900/80 backdrop-blur rounded px-2 py-1 z-30`}>
+          {isLocal && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/80 backdrop-blur rounded px-2 py-1 z-30">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -214,6 +192,7 @@ function PlayerCamera3D({
               {isVideoEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
             </Button>
           </div>
+          )}
 
           {/* CRT Scanline overlay effect */}
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-20 opacity-60" />

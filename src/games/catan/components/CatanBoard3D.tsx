@@ -1,5 +1,5 @@
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import { Environment, ContactShadows } from '@react-three/drei';
 import { Physics, RigidBody } from '@react-three/rapier';
 import { useCatanStore } from '../store/catanStore';
 import { HexTile3D } from './HexTile3D';
@@ -12,6 +12,7 @@ import { Ports3D } from './Ports3D';
 import { ResourcePopups3D } from './ui/ResourcePopups3D';
 import { Telepresence3D } from './ui/Telepresence3D';
 import { Suspense, useEffect } from 'react';
+import { TableForgeXRScene } from '@/components/xr/TableForgeXRScene';
 
 function ResponsiveCamera() {
   const { size, camera } = useThree();
@@ -47,6 +48,7 @@ export function CatanBoard3D() {
         }}
       >
         <Suspense fallback={null}>
+          <TableForgeXRScene originPosition={[0, 1.2, -0.75]} orbitMinDistance={4} orbitMaxDistance={25}>
           <ResponsiveCamera />
           {/* Lighting Setup (Clean and clear) */}
           <ambientLight intensity={0.6} />
@@ -97,21 +99,7 @@ export function CatanBoard3D() {
           <ResourceFlow3D flows={resourceFlows} onComplete={removeResourceFlow} />
           
           <Telepresence3D />
-
-          <OrbitControls 
-            makeDefault 
-            enableZoom={true}
-            enablePan={true}
-            enableRotate={true}
-            rotateSpeed={1.0}
-            minPolarAngle={Math.PI / 6} 
-            maxPolarAngle={Math.PI / 2.3} 
-            minDistance={4} 
-            maxDistance={25} 
-            enableDamping={true}
-            dampingFactor={0.05}
-            zoomSpeed={1.2}
-          />
+          </TableForgeXRScene>
         </Suspense>
       </Canvas>
     </div>

@@ -35,3 +35,6 @@ export const CONTINENTS = [
   { id: 'asia', name: 'Asia', bonus: 7 },
   { id: 'australia', name: 'Australia', bonus: 2 },
 ];
+
+export { rollRiskCombat, canAttackFrom, isNeighborAttack, getContinentBonus } from './riskCombat';
+export type { CombatRollResult } from './riskCombat';

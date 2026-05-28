@@ -7,14 +7,12 @@ import { createLiveKitParticipantToken, isLiveKitConfigured } from './livekit/to
 import cors from 'cors';
 import { GoogleGenAI } from '@google/genai';
 
-const PORT = process.env.NODE_ENV === 'production' ? 3000 : Number(process.env.PORT ?? 3001);
+const PORT = Number(process.env.PORT ?? 3001);
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '32kb' }));
-
-// ... all api routes ...
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -133,16 +131,6 @@ app.post('/api/livekit/token', async (req, res) => {
     res.status(500).json({ error: 'LiveKit token generation failed' });
   }
 });
-
-import path from 'path';
-
-if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(process.cwd(), 'dist');
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
 
 app.listen(PORT, () => {
   console.log(`TableForge API listening on http://localhost:${PORT}`);

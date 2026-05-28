@@ -19,13 +19,19 @@ import {
   Trophy,
   Dices
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GameRoomProvider } from '@/components/multiplayer/GameRoomProvider';
+import { useCatanMultiplayer } from './multiplayer/useCatanMultiplayer';
+import { liveblocksEnabled } from '@/lib/liveblocks/client';
 import { Button } from '@/components/ui/button';
 import { CatanBoard3D } from './components/CatanBoard3D';
 import { useCatanStore } from './store/catanStore';
 import { LifecyclePhase, ResourceType } from './domain/types';
 import { useCatanAI, AIPlayerConfig } from './ai/useCatanAI';
 import { DiceRollButton } from '@/components/game/DiceRollButton';
+import { VRSessionControls } from '@/components/xr/VRSessionControls';
+import { TableSessionBar } from '@/components/session/TableSessionBar';
+import { BoardTableShell } from '@/components/session/BoardTableShell';
 import { AudioSystem } from './core/AudioSystem';
 import { 
   GuidanceHUD, 
@@ -39,7 +45,7 @@ import {
   SetupPromptOverlay
 } from './components/GameUI';
 
-export default function CatanGamePage() {
+function CatanGamePageInner({ multiplayer }: { multiplayer?: { isInRoom: boolean; isHost: boolean; playerCount: number; eventLogLength?: number; roomLabel?: string } }) {
   const navigate = useNavigate();
   const { 
     players, 
@@ -53,7 +59,8 @@ export default function CatanGamePage() {
     currentTurnLog,
     rollDice,
     endTurn,
-    bankInventory
+    bankInventory,
+    winnerPlayerId,
   } = useCatanStore();
 
   const [showCatanSetup, setShowCatanSetup] = useState(true);
@@ -79,6 +86,38 @@ export default function CatanGamePage() {
 
   return (
     <div className="h-[100dvh] w-full bg-slate-950 overflow-hidden relative text-white selection:bg-primary/20">
+      <div className="absolute top-3 left-3 right-3 z-50 pointer-events-none">
+        <div className="max-w-lg mx-auto pointer-events-auto">
+          <TableSessionBar
+            gameTitle="Catan"
+            roomLabel={multiplayer?.roomLabel}
+            isHost={multiplayer?.isHost}
+            playerCount={multiplayer?.playerCount ?? 1}
+            eventLogLength={multiplayer?.eventLogLength}
+          />
+        </div>
+      </div>
+
+      {phase === LifecyclePhase.GAME_OVER && winnerPlayerId && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-[60] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6"
+        >
+          <div className="text-center space-y-6 max-w-md">
+            <Trophy className="w-16 h-16 text-primary mx-auto" />
+            <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Τέλος Παιχνιδιού</h2>
+            <p className="text-slate-300">
+              Νικητής: <span className="text-primary font-bold">{players[winnerPlayerId]?.name}</span>
+              {' '}({players[winnerPlayerId]?.victoryPoints} ΠΝ)
+            </p>
+            <Button onClick={() => navigate('/games')} className="bg-primary text-white">
+              Επιστροφή στα Παιχνίδια
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       <AnimatePresence>
         <ActivePlayerRollOverlay key="active-roll" />
         {phase === LifecyclePhase.LOBBY && showCatanSetup && (
@@ -430,5 +469,36 @@ function GameGuideModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function CatanGamePage() {
+  const [params] = useSearchParams();
+  const roomId = params.get('room') ?? 'public';
+  return (
+    <GameRoomProvider roomId={`tableforge-catan-${roomId}`} withCatanStorage>
+      <CatanGamePageWithSync />
+    </GameRoomProvider>
+  );
+}
+
+function CatanGamePageWithSync() {
+  if (!liveblocksEnabled) return <CatanGamePageInner />;
+  return <LiveblocksCatanSync />;
+}
+
+function LiveblocksCatanSync() {
+  const mp = useCatanMultiplayer(true);
+  const [params] = useSearchParams();
+  return (
+    <CatanGamePageInner
+      multiplayer={{
+        isInRoom: mp.isInRoom,
+        isHost: mp.isHost,
+        playerCount: mp.playerCount,
+        eventLogLength: mp.eventLogLength,
+        roomLabel: params.get('room') ?? undefined,
+      }}
+    />
   );
 }

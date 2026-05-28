@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { GameRoomProvider } from '@/components/multiplayer/GameRoomProvider';
 
 const AVAILABLE_COLORS = ['#dc2626', '#2563eb', '#16a34a', '#eab308', '#9333ea', '#db2777', '#ea580c', '#06b6d4'];
 const CURRENT_USER_ID = '1';
@@ -121,7 +122,8 @@ export default function GameLobbyPage() {
   const getPlayerColor = (id: string) => players.find(p => p.id === id)?.color || '#ffffff';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8">
+    <GameRoomProvider roomId={`tableforge-lobby-${roomCode ?? "demo"}`}>
+        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -518,5 +520,6 @@ export default function GameLobbyPage() {
         </div>
       </div>
     </div>
+    </GameRoomProvider>
   );
 }
