@@ -1,0 +1,18 @@
+# TableForge coturn — deploy on VPS with TLS (turns:)
+# Usage:
+#   cp env.coturn.example .env.coturn && edit secrets
+#   ./scripts/coturn/generate-certs.sh turn.yourdomain.com
+#   docker compose --env-file .env.coturn up -d
+
+services:
+  coturn:
+    image: coturn/coturn:4.6.2
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+      - ./certs:/etc/coturn/certs:ro
+    environment:
+      - TURN_REALM=${TURN_REALM:-tableforge.local}
+      - TURN_SECRET=${TURN_SECRET:?set TURN_SECRET in .env.coturn}
+    command: ["-c", "/etc/coturn/turnserver.conf"]

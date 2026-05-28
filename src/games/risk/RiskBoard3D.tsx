@@ -4,7 +4,7 @@
  * territory markers, 3D army pieces, and interactive gameplay
  */
 
-import { useRef, useState, useMemo, Suspense, useEffect } from 'react';
+import { useRef, useState, useMemo, Suspense, useEffect, lazy } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   OrbitControls,
@@ -12,14 +12,14 @@ import {
   PerspectiveCamera,
   Html,
   Environment,
-  useTexture,
   Billboard,
   Float,
 } from '@react-three/drei';
-import { EffectComposer, Bloom, DepthOfField, Vignette, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { type GameState, type Territory, CONTINENTS } from './RiskEngine';
 import { PresencePanel3D } from '@/components/game/PresencePanel3D';
+
+const RiskPostEffects = lazy(() => import('./RiskPostEffects'));
 
 // ============================================================================
 // FLAT MAP APPROACH — Like a real Risk board game on a table
@@ -407,9 +407,6 @@ interface BoardContentProps {
 }
 
 function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinforce, isLayoutMode }: BoardContentProps) {
-  // High-resolution stylized world map for Risk feel
-  const mapTexture = useTexture('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2066&auto=format&fit=crop');
-  
   const getPlayerColor = (pid: string | null) => {
     if (!pid) return '#666666';
     return gameState.players.find(p => p.id === pid)?.color || '#666666';
@@ -438,16 +435,6 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
       {/* Camera — top-down angled view like looking at a board game */}
       <PerspectiveCamera makeDefault position={[0, 32, 15]} fov={45} />
-      <OrbitControls 
-        enablePan 
-        enableZoom 
-        enableRotate 
-        minDistance={2} 
-        maxDistance={180} 
-        maxPolarAngle={Math.PI / 2.2} 
-        minPolarAngle={0.05}
-        makeDefault
-      />
 
       <color attach="background" args={['#0A0C10']} />
       <fog attach="fog" args={['#0A0C10', 45, 80]} />
@@ -462,9 +449,8 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[54, 36]} />
         <meshStandardMaterial 
-          map={mapTexture} 
-          color="#ffffff" 
-          roughness={0.7} 
+          color="#A8D0E6" 
+          roughness={0.9} 
           metalness={0.02}
         />
       </mesh>
@@ -569,12 +555,9 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
         );
       })}
 
-      {/* Post-processing Pipeline */}
-      <EffectComposer>
-        <Bloom luminanceThreshold={1.0} mipmapBlur intensity={0.1} />
-        <Vignette eskil={false} offset={0.02} darkness={0.6} />
-        <SMAA />
-      </EffectComposer>
+      <Suspense fallback={null}>
+        <RiskPostEffects />
+      </Suspense>
     </>
   );
 }
