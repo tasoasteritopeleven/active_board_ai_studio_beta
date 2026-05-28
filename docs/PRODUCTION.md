@@ -2,7 +2,7 @@
 
 ## coturn on VPS (TLS / `turns:`)
 
-1. Copy `infra/coturn/.env.coturn.example` → `infra/coturn/.env.coturn` and set `TURN_SECRET`.
+1. Copy `infra/coturn/env.coturn.example` → `infra/coturn/.env.coturn` and set `TURN_SECRET`.
 2. Set `external-ip` in `infra/coturn/turnserver.conf` to your VPS public/private pair.
 3. Generate certs (Let's Encrypt recommended for production):
    ```bash
