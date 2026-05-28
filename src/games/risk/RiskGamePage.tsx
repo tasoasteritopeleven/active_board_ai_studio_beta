@@ -31,6 +31,7 @@ import { DiceRollButton } from '@/components/game/DiceRollButton';
 import { TableSessionBar } from '@/components/session/TableSessionBar';
 import { VRSessionControls } from '@/components/xr/VRSessionControls';
 import { useRiskGameActions } from './useRiskGameActions';
+import { BoardGameTable } from '@/components/boardgame/BoardGameTable';
 
 const AI_CONFIGS: AIPlayerConfig[] = [
   { id: 'p2', isAI: true, difficulty: 'Hard' },
@@ -261,45 +262,47 @@ function RiskGamePageInner() {
         </div>
       </header>
 
-      <div className="flex-1 relative board-game-table bg-[radial-gradient(ellipse_at_center,#1c1410_0%,#0a0806_75%)]">
-        <RiskBoard3D 
-          gameState={gameState}
-          selectedTerritory={selectedTerritory}
-          onTerritoryClick={handleTerritoryClick}
-          onReinforce={handleReinforce}
-        />
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4 pointer-events-none">
+            <BoardGameTable variant="war-room" className="flex-1 relative" tilt={false}>
+        <div className="relative w-full h-full max-w-[96vw] max-h-full mx-auto risk-table-frame rounded-lg overflow-hidden border border-amber-950/50 shadow-2xl">
+          <RiskBoard3D 
+            gameState={gameState}
+            selectedTerritory={selectedTerritory}
+            onTerritoryClick={handleTerritoryClick}
+            onReinforce={handleReinforce}
+          />
+        </div>
+
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-3 pointer-events-none">
           <div className="pointer-events-auto">
             <TableSessionBar gameTitle="Risk Global Domination" playerCount={gameState.players.length} />
           </div>
         </div>
 
-        {/* HUD Overlay - Desktop only, mobile uses sidebar */}
-        <div className="hidden sm:block absolute top-6 left-6 space-y-4 pointer-events-none">
-          <Card className="w-64 bg-slate-900/90 backdrop-blur-xl border-slate-800 pointer-events-auto shadow-2xl">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-xs text-slate-500 uppercase tracking-widest font-bold">Τρέχων Γύρος</CardTitle>
+        <div className="hidden sm:block absolute top-4 left-4 z-20 space-y-3 pointer-events-none max-w-[240px]">
+          <Card className="bg-board-paper/95 border-amber-900/40 text-amber-950 pointer-events-auto shadow-xl board-fold-shadow">
+            <CardHeader className="p-3 pb-1">
+              <CardTitle className="text-[10px] text-amber-800 uppercase tracking-widest font-bold">Τρέχων γύρος</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{ backgroundColor: gameState.players.find(p => p.id === gameState.currentPlayerId)?.color }}>
+            <CardContent className="p-3 pt-0">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold border-2 border-amber-900/20" style={{ backgroundColor: gameState.players.find(p => p.id === gameState.currentPlayerId)?.color }}>
                   {gameState.players.find(p => p.id === gameState.currentPlayerId)?.name[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">{gameState.players.find(p => p.id === gameState.currentPlayerId)?.name}</p>
-                  <p className="text-[10px] text-primary font-bold uppercase tracking-wider">
-                    {gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace} Στρατιώτες για τοποθέτηση
+                  <p className="text-sm font-bold text-amber-950">{gameState.players.find(p => p.id === gameState.currentPlayerId)?.name}</p>
+                  <p className="text-[9px] text-amber-800 font-bold uppercase">
+                    {gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace} στρατιώτες
                   </p>
                 </div>
               </div>
               {gameState.phase === 'reinforce' && (
                 <Button 
-                  className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20"
+                  className="w-full mt-3 bg-amber-800 hover:bg-amber-700 text-amber-50 font-bold text-xs h-9"
                   onClick={handleEndPhase}
                   disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) > 0}
                 >
-                  <Check className="h-4 w-4 mr-2" />
-                  ΟΛΟΚΛΗΡΩΣΗ ΤΟΠΟΘΕΤΗΣΗΣ
+                  <Check className="h-3 w-3 mr-1" />
+                  Τέλος τοποθέτησης
                 </Button>
               )}
             </CardContent>
@@ -307,88 +310,22 @@ function RiskGamePageInner() {
 
           <AnimatePresence>
             {selectedTerritory && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <Card className="w-64 bg-slate-900/90 backdrop-blur-xl border-slate-800 pointer-events-auto shadow-2xl overflow-hidden">
-                  <div className="h-1 w-full bg-primary" />
-                  <CardContent className="p-4 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-bold text-white leading-tight">
-                          {gameState.territories.find(t => t.id === selectedTerritory)?.name}
-                        </h3>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
-                          {gameState.territories.find(t => t.id === selectedTerritory)?.continent.replace('-', ' ')}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="border-slate-700 text-slate-500 font-mono">#{selectedTerritory}</Badge>
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
+                <Card className="bg-board-paper/95 border-amber-900/40 pointer-events-auto shadow-xl board-fold-shadow overflow-hidden">
+                  <div className="h-1 bg-amber-700" />
+                  <CardContent className="p-3 space-y-3 text-amber-950">
+                    <div>
+                      <h3 className="font-bold text-sm leading-tight">
+                        {gameState.territories.find(t => t.id === selectedTerritory)?.name}
+                      </h3>
+                      <p className="text-[9px] uppercase text-amber-800/80 font-bold">
+                        {gameState.territories.find(t => t.id === selectedTerritory)?.continent.replace('-', ' ')}
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50 group hover:border-primary/50 transition-colors">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Στρατός</p>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-primary" />
-                          <p className="text-xl font-bold text-white">
-                            {gameState.territories.find(t => t.id === selectedTerritory)?.armies}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Κάτοχος</p>
-                        <p className="text-sm font-bold text-white truncate">
-                          {gameState.players.find(p => p.id === gameState.territories.find(t => t.id === selectedTerritory)?.ownerId)?.name.split(' ')[1]}
-                        </p>
-                      </div>
-                    </div>
-
-                    {gameState.phase === 'reinforce' && 
-                     gameState.territories.find(t => t.id === selectedTerritory)?.ownerId === gameState.currentPlayerId && (
-                      <div className="space-y-3 pt-2">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Ανάπτυξη Στρατευμάτων</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 1)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 1}
-                          >
-                            <User className="h-3 w-3 mr-1" /> +1
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 5)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 5}
-                          >
-                            <Zap className="h-3 w-3 mr-1" /> +5
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 10)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 10}
-                          >
-                            <Crosshair className="h-3 w-3 mr-1" /> +10
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
+                    <p className="text-lg font-black">Στρατός: {gameState.territories.find(t => t.id === selectedTerritory)?.armies}</p>
                     {gameState.phase === 'attack' && (
-                      <Button
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20"
-                        onClick={handleExecuteAttack}
-                        disabled={!gameState.attackingFrom}
-                      >
-                        <Sword className="h-4 w-4 mr-2" />
-                        ΕΠΙΘΕΣΗ
+                      <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-bold" onClick={handleExecuteAttack} disabled={!gameState.attackingFrom}>
+                        <Sword className="h-4 w-4 mr-1" /> Επίθεση
                       </Button>
                     )}
                   </CardContent>
@@ -398,23 +335,23 @@ function RiskGamePageInner() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom Controls */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-[90%] sm:w-auto px-4 sm:px-0">
-          <Card className="bg-slate-900/90 backdrop-blur-xl border-slate-800 shadow-2xl">
-            <CardContent className="p-2 flex items-center justify-between sm:justify-start gap-2">
-              <DiceRollButton onClick={handleExecuteAttack} disabled={gameState.phase !== 'attack'} className="flex-1 sm:flex-none" />
-              <Button variant="secondary" className="hidden sm:flex font-bold uppercase text-[10px] tracking-widest" onClick={handleEndPhase}>Επόμενη Φάση</Button>
-              <div className="w-px h-8 bg-slate-800 mx-1 sm:mx-2"></div>
-              <Button variant="ghost" size="icon" className="text-slate-400">
-                <MessageSquare className="h-5 w-5" />
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 pointer-events-auto px-4 w-full max-w-lg">
+          <div className="flex gap-2 justify-center">
+            <Button variant="secondary" className="font-bold uppercase text-[10px] bg-board-paper text-amber-950 border-amber-900/30" onClick={handleEndPhase}>
+              Επόμενη φάση
+            </Button>
+            {gameState.phase === 'attack' && (
+              <Button className="font-bold uppercase text-[10px] bg-red-700" onClick={handleExecuteAttack}>
+                <Sword className="h-3 w-3 mr-1" /> Επίθεση
               </Button>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
-      </div>
+      </BoardGameTable>
     </div>
   );
 }
+
 
 function RiskSidebarContent({ gameState, selectedTerritory, onReinforce, onAttack }: { gameState: GameState, selectedTerritory: string | null, onReinforce: (id: string, amount: number) => void, onAttack: () => void }) {
   const territory = gameState.territories.find(t => t.id === selectedTerritory);
