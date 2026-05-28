@@ -210,11 +210,7 @@ function RiskGamePageInner() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-      <div className="absolute top-3 left-3 right-3 z-50">
-        <TableSessionBar gameTitle="Risk" className="max-w-md" />
-      </div>
-
-      <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
+<header className="h-11 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => navigate('/games')}>
             <ChevronLeft className="h-5 w-5" />
@@ -265,13 +261,18 @@ function RiskGamePageInner() {
         </div>
       </header>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative board-game-table bg-[radial-gradient(ellipse_at_center,#1c1410_0%,#0a0806_75%)]">
         <RiskBoard3D 
           gameState={gameState}
           selectedTerritory={selectedTerritory}
           onTerritoryClick={handleTerritoryClick}
           onReinforce={handleReinforce}
         />
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4 pointer-events-none">
+          <div className="pointer-events-auto">
+            <TableSessionBar gameTitle="Risk Global Domination" playerCount={gameState.players.length} />
+          </div>
+        </div>
 
         {/* HUD Overlay - Desktop only, mobile uses sidebar */}
         <div className="hidden sm:block absolute top-6 left-6 space-y-4 pointer-events-none">

@@ -6,12 +6,17 @@ import {
   EyeOff,
   Sparkles,
   Loader2,
+  History,
+  Timer,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import { TableSessionBar } from '@/components/session/TableSessionBar';
+import { CodenamesBoardVisual } from './components/CodenamesBoardVisual';
 import {
   createCodenamesGame,
   endGuessing,
@@ -29,17 +34,6 @@ export default function CodenamesGamePage() {
   const [clueCount, setClueCount] = useState(2);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const getCardStyle = (card: CodenamesState['cards'][0]) => {
-    if (!card.revealed && !game.spymasterView) {
-      return 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200 cursor-pointer';
-    }
-    const base = 'border-2';
-    if (card.type === 'red') return `${base} bg-red-950/40 border-red-500 text-red-200`;
-    if (card.type === 'blue') return `${base} bg-blue-950/40 border-blue-500 text-blue-200`;
-    if (card.type === 'neutral') return `${base} bg-slate-700/40 border-slate-500 text-slate-300`;
-    return `${base} bg-black border-slate-900 text-slate-500`;
-  };
-
   const teamWords = game.cards
     .filter((c) => !c.revealed && c.type === game.activeTeam)
     .map((c) => c.word);
@@ -47,90 +41,136 @@ export default function CodenamesGamePage() {
   const handleAiHint = async () => {
     setAiLoading(true);
     try {
-      const hint = await requestCodenamesHint({
-        words: teamWords,
-        team: game.activeTeam,
-      });
+      const hint = await requestCodenamesHint({ words: teamWords, team: game.activeTeam });
       setClueWord(hint.clue);
       setClueCount(hint.count);
       toast.success(`AI: ${hint.clue} / ${hint.count}`);
     } catch {
-      toast.error('Ο server AI δεν είναι διαθέσιμος. Εκκινήστε npm run dev:server με GEMINI_API_KEY.');
+      toast.error('Ο server AI δεν είναι διαθέσιμος.');
     } finally {
       setAiLoading(false);
     }
   };
 
+  const cardsDisabled =
+    game.winner !== null || (game.phase === 'clue' && !game.spymasterView);
+
   return (
-    <div className="h-screen flex flex-col bg-slate-950 overflow-hidden text-white">
-      <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/games')}>
-            <ChevronLeft className="h-5 w-5" />
+    <div className="h-[100dvh] flex flex-col bg-[#0a1210] overflow-hidden">
+      <header className="h-12 shrink-0 border-b border-emerald-900/40 bg-[#0d1f17]/90 backdrop-blur flex items-center justify-between px-3 z-20">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-200/70" onClick={() => navigate('/games')}>
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-sm font-bold uppercase tracking-widest">Codenames</h1>
-            <p className="text-[10px] text-slate-500">TableForge + Gemini hints (server)</p>
+            <h1 className="text-xs font-bold text-emerald-100 uppercase tracking-widest">Codenames</h1>
+            <p className="text-[9px] text-emerald-600 font-mono">Ομαδικό παιχνίδι λέξεων</p>
           </div>
         </div>
-        <div className="flex items-center gap-6 text-center">
-          <div>
-            <p className="text-[10px] text-red-500 font-bold">Κόκκινη</p>
-            <p className="text-xl font-bold">{game.redRemaining}</p>
+
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <p className="text-[8px] text-red-400 font-bold uppercase">Κόκκινη</p>
+            <p className="text-lg font-black text-red-300 leading-none">{game.redRemaining}</p>
           </div>
-          <div>
-            <p className="text-[10px] text-blue-500 font-bold">Μπλε</p>
-            <p className="text-xl font-bold">{game.blueRemaining}</p>
+          <div className="text-center">
+            <p className="text-[8px] text-blue-400 font-bold uppercase">Μπλε</p>
+            <p className="text-lg font-black text-blue-300 leading-none">{game.blueRemaining}</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-950/50 border border-emerald-800/30">
+            <Timer className="h-3 w-3 text-emerald-500" />
+            <span className="text-xs font-mono text-emerald-200">Live</span>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setGame((g) => toggleSpymasterView(g))}>
-          {game.spymasterView ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-          Spymaster
-        </Button>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant={game.spymasterView ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-[10px]"
+            onClick={() => setGame((g) => toggleSpymasterView(g))}
+          >
+            {game.spymasterView ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          </Button>
+          <Sheet>
+            <SheetTrigger
+              render={
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-200/70">
+                  <History className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <SheetContent side="right" className="w-80 bg-[#0d1f17] border-emerald-900/30">
+              <h3 className="text-sm font-bold text-emerald-100 mb-3">Ιστορικό</h3>
+              <div className="space-y-2 text-xs text-emerald-200/70 max-h-[70vh] overflow-y-auto">
+                {game.log.map((l, i) => (
+                  <div key={i} className="p-2 rounded bg-emerald-950/40 border border-emerald-900/20">
+                    {l}
+                  </div>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
-        <div className="flex-1 grid grid-cols-5 gap-2 content-start overflow-y-auto">
-          {game.cards.map((card, index) => (
-            <button
-              key={card.word}
-              type="button"
-              disabled={card.revealed || game.winner !== null || (game.phase === 'clue' && !game.spymasterView)}
-              onClick={() => setGame((g) => guessCard(g, index))}
-              className={`aspect-square rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold p-1 transition-all ${getCardStyle(card)} ${card.revealed ? 'opacity-60' : ''}`}
-            >
-              {card.word}
-            </button>
-          ))}
+      <div className="px-3 pt-2 shrink-0">
+        <TableSessionBar gameTitle="Codenames" playerCount={4} />
+      </div>
+
+      {/* Current clue banner */}
+      {game.currentClue && game.phase === 'guess' && (
+        <div className="shrink-0 px-4 py-2 flex justify-center">
+          <Card className="bg-emerald-950/60 border-emerald-800/40 backdrop-blur max-w-md w-full">
+            <CardContent className="p-3 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[9px] text-emerald-500 uppercase font-bold">Υπόδειξη</p>
+                <p className="text-xl font-black text-white tracking-widest">
+                  {game.currentClue.word}{' '}
+                  <span className="text-amber-400">{game.currentClue.count}</span>
+                </p>
+                <p className="text-[10px] text-emerald-400/70">Απομένουν {game.guessesLeft} επιλογές</p>
+              </div>
+              <Button size="sm" variant="secondary" onClick={() => setGame((g) => endGuessing(g))}>
+                Πέρασμα
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+      )}
 
-        <div className="w-full lg:w-72 space-y-4">
-          <Badge className={game.activeTeam === 'red' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}>
-            Σειρά: {game.activeTeam === 'red' ? 'Κόκκινη' : 'Μπλε'} — {game.phase === 'clue' ? 'Υπόδειξη' : 'Μάντεψε'}
-          </Badge>
+      <main className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center p-4 bg-[radial-gradient(ellipse_at_center,#0f2a1c_0%,#061510_65%)]">
+        <CodenamesBoardVisual
+          cards={game.cards}
+          spymasterView={game.spymasterView}
+          activeTeam={game.activeTeam}
+          disabled={cardsDisabled}
+          onCardClick={(index) => setGame((g) => guessCard(g, index))}
+        />
 
-          {game.phase === 'clue' && (
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase text-slate-500">Υπόδειξη Spymaster</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Input
-                  value={clueWord}
-                  onChange={(e) => setClueWord(e.target.value)}
-                  placeholder="Μία λέξη"
-                  className="bg-slate-950 border-slate-700"
-                />
-                <Input
-                  type="number"
-                  min={1}
-                  max={3}
-                  value={clueCount}
-                  onChange={(e) => setClueCount(Number(e.target.value))}
-                  className="bg-slate-950 border-slate-700"
-                />
+        {game.phase === 'clue' && (
+          <Card className="mt-4 w-full max-w-sm bg-emerald-950/70 border-emerald-800/40">
+            <CardContent className="p-4 space-y-3">
+              <p className="text-[10px] uppercase text-emerald-500 font-bold text-center">
+                Spymaster — {game.activeTeam === 'red' ? 'Κόκκινη' : 'Μπλε'}
+              </p>
+              <Input
+                value={clueWord}
+                onChange={(e) => setClueWord(e.target.value)}
+                placeholder="Μία λέξη"
+                className="bg-[#061510] border-emerald-800/50 text-emerald-50"
+              />
+              <Input
+                type="number"
+                min={1}
+                max={3}
+                value={clueCount}
+                onChange={(e) => setClueCount(Number(e.target.value))}
+                className="bg-[#061510] border-emerald-800/50"
+              />
+              <div className="flex gap-2">
                 <Button
-                  className="w-full"
+                  className="flex-1"
                   onClick={() => {
                     setGame((g) => giveClue(g, clueWord, clueCount));
                     setClueWord('');
@@ -138,45 +178,35 @@ export default function CodenamesGamePage() {
                 >
                   Δώσε υπόδειξη
                 </Button>
-                <Button variant="outline" className="w-full" disabled={aiLoading} onClick={handleAiHint}>
-                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  AI Υπόδειξη (Gemini)
+                <Button variant="outline" disabled={aiLoading} onClick={handleAiHint}>
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {game.phase === 'guess' && game.currentClue && (
-            <Card className="bg-slate-900 border-slate-800">
-              <CardContent className="pt-4 space-y-3">
-                <p className="text-center text-lg font-bold text-primary">
-                  {game.currentClue.word} / {game.currentClue.count}
-                </p>
-                <p className="text-center text-xs text-slate-500">
-                  Απομένουν {game.guessesLeft} μαντεψιές
-                </p>
-                <Button variant="secondary" className="w-full" onClick={() => setGame((g) => endGuessing(g))}>
-                  Πέρασμα
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {game.winner && (
-            <p className="text-center font-bold text-primary text-lg">
-              Νίκη: {game.winner === 'red' ? 'Κόκκινη' : 'Μπλε'} ομάδα!
-            </p>
-          )}
-
-          <Card className="bg-slate-900 border-slate-800">
-            <CardContent className="pt-4 text-[10px] text-slate-400 max-h-32 overflow-y-auto space-y-1">
-              {game.log.slice(-6).map((l, i) => (
-                <div key={i}>{l}</div>
-              ))}
+              </div>
             </CardContent>
           </Card>
+        )}
+
+        {game.winner && (
+          <p className="mt-4 text-center font-black text-xl text-amber-300 uppercase tracking-widest">
+            Νίκη — {game.winner === 'red' ? 'Κόκκινη' : 'Μπλε'} ομάδα
+          </p>
+        )}
+      </main>
+
+      <footer className="shrink-0 py-2 border-t border-emerald-900/30 bg-[#0d1f17]/80 flex justify-center gap-6">
+        <div className="flex items-center gap-2 text-[10px] text-red-300/80">
+          <Users className="w-3 h-3" />
+          <span>
+            Κόκκινη: <strong className="text-red-200">{game.redRemaining}</strong> κάρτες
+          </span>
         </div>
-      </div>
+        <div className="flex items-center gap-2 text-[10px] text-blue-300/80">
+          <Users className="w-3 h-3" />
+          <span>
+            Μπλε: <strong className="text-blue-200">{game.blueRemaining}</strong> κάρτες
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
