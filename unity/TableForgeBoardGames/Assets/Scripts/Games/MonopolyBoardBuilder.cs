@@ -1,47 +1,61 @@
 using System.Collections.Generic;
-using TableForge.Bridge;
+using TableForge.Core;
 using UnityEngine;
 
 namespace TableForge.Games
 {
-    /// <summary>
-    /// Procedural Monopoly board — 40 spaces, paper tiles on green felt.
-    /// </summary>
+    /// <summary>40-space Monopoly board — wood rim, green center, colored property stripes.</summary>
     public class MonopolyBoardBuilder : MonoBehaviour
     {
         private readonly List<GameObject> _spaces = new();
+        private readonly List<Renderer> _stripes = new();
         private GameObject _pawn;
+        private Transform _boardRoot;
 
-        private void Start()
+        private static readonly (int index, string stripeHex)[] Stripes =
         {
-            BuildBoard();
-        }
+            (1, "#6B4423"), (3, "#6B4423"), (6, "#38BDF8"), (8, "#38BDF8"), (9, "#38BDF8"),
+            (11, "#EC4899"), (13, "#EC4899"), (14, "#EC4899"), (16, "#F97316"), (18, "#F97316"),
+            (19, "#F97316"), (21, "#EF4444"), (23, "#EF4444"), (24, "#EF4444"), (26, "#FACC15"),
+            (27, "#FACC15"), (29, "#FACC15"), (31, "#22C55E"), (32, "#22C55E"), (34, "#22C55E"),
+            (37, "#2563EB"), (39, "#2563EB"),
+        };
+
+        private void Start() => BuildBoard();
 
         public void ApplyState(string stateJson)
         {
-            var pos = ParseInt(stateJson, "position", 0);
-            var color = ParseColor(stateJson, "playerColor", Color.red);
+            var pos = TableForgeJson.GetInt(stateJson, "position", 0);
+            var hex = TableForgeJson.GetString(stateJson, "playerColor", "#EF4444");
+            TableForgeJson.TryParseColor(hex, out var color);
             PlacePawn(pos, color);
         }
 
         private void BuildBoard()
         {
-            var root = new GameObject("MonopolyBoard");
-            root.transform.SetParent(transform, false);
-            root.transform.localPosition = Vector3.zero;
+            _boardRoot = new GameObject("MonopolyBoard").transform;
+            _boardRoot.SetParent(transform, false);
+
+            var rim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rim.name = "WoodRim";
+            rim.transform.SetParent(_boardRoot, false);
+            rim.transform.localScale = new Vector3(11.5f, 0.12f, 11.5f);
+            rim.transform.localPosition = new Vector3(0f, -0.04f, 0f);
+            rim.GetComponent<Renderer>().material = TableForgeMaterials.WoodTable;
 
             const int count = 40;
-            const float outer = 5.2f;
-            const float inner = 3.4f;
+            const float outer = 5.4f;
+            const float inner = 3.6f;
 
             for (var i = 0; i < count; i++)
             {
-                var t = i / (float)count * Mathf.PI * 2f;
-                var onSide = i % 10;
                 var side = i / 10;
+                var onSide = i % 10;
                 Vector3 pos;
                 var rot = Quaternion.identity;
-                var scale = new Vector3(0.55f, 0.04f, 0.38f);
+                var scale = i % 10 == 0
+                    ? new Vector3(0.95f, 0.05f, 0.95f)
+                    : new Vector3(0.58f, 0.045f, 0.4f);
 
                 if (side == 0)
                     pos = new Vector3(Mathf.Lerp(-inner, inner, onSide / 9f), 0.02f, -outer);
@@ -56,64 +70,52 @@ namespace TableForge.Games
                 }
 
                 var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tile.transform.SetParent(root.transform);
+                tile.name = $"Space_{i}";
+                tile.transform.SetParent(_boardRoot, false);
                 tile.transform.localPosition = pos;
                 tile.transform.localRotation = rot;
                 tile.transform.localScale = scale;
 
-                var mat = new Material(Shader.Find("Standard"));
-                mat.color = i % 10 == 0 ? new Color(0.96f, 0.9f, 0.78f) : new Color(0.93f, 0.86f, 0.72f);
+                var mat = TableForgeMaterials.PaperCard;
+                if (i % 10 == 0)
+                    mat = TableForgeMaterials.Create(new Color(0.98f, 0.94f, 0.82f), 0.5f);
                 tile.GetComponent<Renderer>().material = mat;
                 _spaces.Add(tile);
+
+                foreach (var (idx, hex) in Stripes)
+                {
+                    if (idx != i) continue;
+                    TableForgeJson.TryParseColor(hex, out var stripeColor);
+                    var band = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    band.transform.SetParent(tile.transform, false);
+                    band.transform.localPosition = new Vector3(0f, 0.55f, side % 2 == 0 ? 0.42f : -0.42f);
+                    band.transform.localScale = new Vector3(0.92f, 0.15f, 0.22f);
+                    var bandR = band.GetComponent<Renderer>();
+                    bandR.material = TableForgeMaterials.Create(stripeColor, 0.55f);
+                    _stripes.Add(bandR);
+                    break;
+                }
             }
 
             var center = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            center.transform.SetParent(root.transform);
-            center.transform.localPosition = new Vector3(0f, 0.03f, 0f);
-            center.transform.localScale = new Vector3(inner * 1.85f, 0.05f, inner * 1.85f);
-            var centerMat = new Material(Shader.Find("Standard"));
-            centerMat.color = new Color(0.08f, 0.42f, 0.24f);
-            center.GetComponent<Renderer>().material = centerMat;
+            center.transform.SetParent(_boardRoot, false);
+            center.transform.localPosition = new Vector3(0f, 0.025f, 0f);
+            center.transform.localScale = new Vector3(inner * 1.75f, 0.04f, inner * 1.75f);
+            center.GetComponent<Renderer>().material = TableForgeMaterials.FeltGreen;
 
-            _pawn = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            _pawn.transform.SetParent(root.transform);
-            _pawn.transform.localScale = Vector3.one * 0.22f;
-            var pawnMat = new Material(Shader.Find("Standard"));
-            pawnMat.color = Color.red;
-            _pawn.GetComponent<Renderer>().material = pawnMat;
+            _pawn = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            _pawn.name = "Pawn";
+            _pawn.transform.SetParent(_boardRoot, false);
+            _pawn.transform.localScale = new Vector3(0.18f, 0.12f, 0.18f);
+            _pawn.GetComponent<Renderer>().material = TableForgeMaterials.Create(Color.red, 0.6f, 0.15f);
         }
 
         private void PlacePawn(int index, Color color)
         {
             if (_spaces.Count == 0 || _pawn == null) return;
             index = Mathf.Clamp(index, 0, _spaces.Count - 1);
-            _pawn.transform.position = _spaces[index].transform.position + Vector3.up * 0.2f;
+            _pawn.transform.position = _spaces[index].transform.position + Vector3.up * 0.25f;
             _pawn.GetComponent<Renderer>().material.color = color;
-        }
-
-        private static int ParseInt(string json, string key, int fallback)
-        {
-            var needle = "\"" + key + "\":";
-            var idx = json.IndexOf(needle, System.StringComparison.Ordinal);
-            if (idx < 0) return fallback;
-            idx += needle.Length;
-            var end = idx;
-            while (end < json.Length && (char.IsDigit(json[end]) || json[end] == '-')) end++;
-            return int.TryParse(json.Substring(idx, end - idx), out var v) ? v : fallback;
-        }
-
-        private static Color ParseColor(string json, string key, Color fallback)
-        {
-            var hex = "";
-            var needle = "\"" + key + "\":\"";
-            var idx = json.IndexOf(needle, System.StringComparison.Ordinal);
-            if (idx >= 0)
-            {
-                idx += needle.Length;
-                var end = json.IndexOf('"', idx);
-                if (end > idx) hex = json.Substring(idx, end - idx);
-            }
-            return ColorUtility.TryParseHtmlString(hex, out var c) ? c : fallback;
         }
     }
 }

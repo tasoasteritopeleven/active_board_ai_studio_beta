@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import RiskBoard3D from './RiskBoard3D';
-import { UnityBoardCanvas } from '@/components/unity/UnityBoardCanvas';
+import { BoardGameViewport } from '@/components/boardgame/BoardGameViewport';
+import { PhysicalTableLayout } from '@/components/boardgame/PhysicalTableLayout';
 import { type GameState, type Territory, type Player } from './RiskEngine';
 import { useRiskAI, AIPlayerConfig } from './ai/useRiskAI';
 import { Button } from '@/components/ui/button';
@@ -276,7 +277,7 @@ export default function RiskGamePage() {
       </header>
 
       <div className="flex-1 relative min-h-0">
-        <UnityBoardCanvas
+        <BoardGameViewport
           game="risk"
           state={{
             territories: gameState.territories.map((t) => ({
@@ -288,7 +289,7 @@ export default function RiskGamePage() {
             phase: gameState.phase,
           }}
           className="absolute inset-0"
-          fallback={
+          render3D={
             <RiskBoard3D
               gameState={gameState}
               selectedTerritory={selectedTerritory}

@@ -1,5 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { Gamepad2, Hexagon, Globe2, ChevronLeft, Banknote, MessageSquare } from 'lucide-react';
+import {
+  Gamepad2,
+  Hexagon,
+  Globe2,
+  ChevronLeft,
+  Banknote,
+  MessageSquare,
+  BookOpen,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +33,10 @@ export default function GamesSelectionPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-slate-900/50 border-slate-800 hover:border-orange-500/50 transition-all cursor-pointer group" onClick={() => navigate('/games/catan')}>
+          <Card
+            className="bg-slate-900/50 border-slate-800 hover:border-orange-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/catan')}
+          >
             <CardHeader>
               <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-3">
                 <Hexagon className="h-7 w-7 text-orange-500" />
@@ -38,7 +49,10 @@ export default function GamesSelectionPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer group" onClick={() => navigate('/games/risk')}>
+          <Card
+            className="bg-slate-900/50 border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/risk')}
+          >
             <CardHeader>
               <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-3">
                 <Globe2 className="h-7 w-7 text-blue-500" />
@@ -51,32 +65,58 @@ export default function GamesSelectionPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer group" onClick={() => navigate('/games/monopoly')}>
+          <Card
+            className="bg-slate-900/50 border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/monopoly')}
+          >
             <CardHeader>
               <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-3">
                 <Banknote className="h-7 w-7 text-emerald-500" />
               </div>
               <CardTitle className="text-lg text-white">Monopoly</CardTitle>
-              <CardDescription>Κλασικό ταμπλό 40 θέσεων με κέντρο MONOPOLY.</CardDescription>
+              <CardDescription>Κλασικό ταμπλό 40 θέσεων · Unity WebGL ή 3D fallback.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold">Άνοιγμα τραπεζιού</Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 border-slate-800 hover:border-teal-500/50 transition-all cursor-pointer group" onClick={() => navigate('/games/codenames')}>
+          <Card
+            className="bg-slate-900/50 border-slate-800 hover:border-teal-500/50 transition-all cursor-pointer group"
+            onClick={() => navigate('/games/codenames')}
+          >
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="w-14 h-14 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-3">
-                  <MessageSquare className="h-7 w-7 text-teal-400" />
-                </div>
-                <Badge variant="outline" className="text-[10px] border-teal-700 text-teal-400">Σε εξέλιξη</Badge>
+              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-3">
+                <MessageSquare className="h-7 w-7 text-teal-400" />
               </div>
               <CardTitle className="text-lg text-white">Codenames</CardTitle>
-              <CardDescription>Ομαδικό παιχνίδι λέξεων — 25 κάρτες σε τσόχαδο.</CardDescription>
+              <CardDescription>25 κάρτες σε τσόχαδο · spymaster + Gemini hints.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full bg-teal-600 hover:bg-teal-700 font-bold">Άνοιγμα τραπεζιού</Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="bg-slate-900/50 border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer group md:col-span-2"
+            onClick={() => navigate('/games/words')}
+          >
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-3">
+                  <BookOpen className="h-7 w-7 text-amber-400" />
+                </div>
+                <Badge variant="outline" className="text-[10px] border-amber-700 text-amber-400">
+                  Σε εξέλιξη
+                </Badge>
+              </div>
+              <CardTitle className="text-lg text-white">Ομαδικό παιχνίδι λέξεων</CardTitle>
+              <CardDescription>Φυσικό ταμπλό λέξεων — multiplayer σύντομα.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700 font-bold max-w-xs">
+                Άνοιγμα τραπεζιού
+              </Button>
             </CardContent>
           </Card>
         </div>
