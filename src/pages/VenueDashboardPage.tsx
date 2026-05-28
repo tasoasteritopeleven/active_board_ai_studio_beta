@@ -123,54 +123,53 @@ interface VenueStats {
   popularGames: { name: string; sessions: number }[];
 }
 
-// Mock data
-const mockTables: Table[] = [
-  { id: '1', name: 'Table Alpha', status: 'in-use', currentGame: 'Settlers of Catan', players: 4, startTime: '14:30', reservedBy: null, reservedUntil: null, recentActivity: ['Alex rolled a 7', 'Sam built a settlement', 'Chris traded 2 sheep for 1 ore'] },
-  { id: '2', name: 'Table Beta', status: 'available', currentGame: null, players: 0, startTime: null, reservedBy: null, reservedUntil: null, recentActivity: [] },
-  { id: '3', name: 'Table Gamma', status: 'reserved', currentGame: null, players: 0, startTime: null, reservedBy: 'John D.', reservedUntil: '18:00', recentActivity: [] },
-  { id: '4', name: 'Table Delta', status: 'in-use', currentGame: 'Ticket to Ride', players: 5, startTime: '13:00', reservedBy: null, reservedUntil: null, recentActivity: ['Morgan claimed route Atlanta-Miami', 'Taylor drew 2 train cards'] },
-  { id: '5', name: 'Table Epsilon', status: 'maintenance', currentGame: null, players: 0, startTime: null, reservedBy: null, reservedUntil: null, recentActivity: [] },
-];
-
-const mockReservations: Reservation[] = [
-  { id: '1', tableId: '3', tableName: 'Table Gamma', customerName: 'John Doe', customerEmail: 'john@example.com', date: '2024-01-15', startTime: '16:00', endTime: '20:00', players: 4, game: 'Settlers of Catan', status: 'confirmed', notes: 'Birthday party' },
-  { id: '2', tableId: '1', tableName: 'Table Alpha', customerName: 'Jane Smith', customerEmail: 'jane@example.com', date: '2024-01-15', startTime: '20:00', endTime: '23:00', players: 5, game: 'Ticket to Ride', status: 'pending', notes: '' },
-  { id: '3', tableId: '2', tableName: 'Table Beta', customerName: 'Bob Wilson', customerEmail: 'bob@example.com', date: '2024-01-16', startTime: '14:00', endTime: '18:00', players: 2, game: 'Carcassonne', status: 'confirmed', notes: 'First time players' },
-];
-
-const mockSessions: GameSession[] = [
-  { 
-    id: '1', 
-    tableId: '1', 
-    tableName: 'Table Alpha', 
-    game: 'Settlers of Catan', 
-    players: [{ name: 'Alex', type: 'local' }, { name: 'Sam', type: 'local' }, { name: 'Chris', type: 'remote-pc' }, { name: 'Jordan', type: 'remote-vr' }], 
-    startTime: '14:30', 
-    duration: 90, 
-    status: 'active',
-    actions: [
-      { id: 'a1', timestamp: '14:30:00', player: 'System', action: 'Game Started', details: 'Initial placement phase' },
-      { id: 'a2', timestamp: '14:35:12', player: 'Alex', action: 'Placed Settlement', details: 'Intersection (0, 1, -1)' },
-      { id: 'a3', timestamp: '14:36:05', player: 'Sam', action: 'Placed Settlement', details: 'Intersection (1, 0, -1)' },
-      { id: 'a4', timestamp: '14:40:22', player: 'Chris', action: 'Rolled Dice', details: 'Result: 7' },
-      { id: 'a5', timestamp: '14:41:10', player: 'Chris', action: 'Moved Robber', details: 'Hex (0, 0, 0)' },
-    ]
-  },
-  { 
-    id: '2', 
-    tableId: '4', 
-    tableName: 'Table Delta', 
-    game: 'Ticket to Ride', 
-    players: [{ name: 'Morgan', type: 'local' }, { name: 'Taylor', type: 'local' }, { name: 'Casey', type: 'local' }, { name: 'Riley', type: 'remote-pc' }, { name: 'Drew', type: 'remote-vr' }], 
-    startTime: '13:00', 
-    duration: 180, 
-    status: 'active',
-    actions: [
-      { id: 'b1', timestamp: '13:00:00', player: 'System', action: 'Game Started', details: 'Dealing initial cards' },
-      { id: 'b2', timestamp: '13:05:30', player: 'Morgan', action: 'Claimed Route', details: 'Atlanta to Miami (5 trains)' },
-    ]
-  },
-];
+  const mockTables: Table[] = [
+    { id: '1', name: 'Τραπέζι Alpha', status: 'in-use', currentGame: 'Catan', players: 4, startTime: '14:30', reservedBy: null, reservedUntil: null, recentActivity: ['Ο Άλεξ έφερε 7', 'Ο Σαμ έχτισε οικισμό', 'Ο Κρις αντάλλαξε 2 πρόβατα για 1 μετάλλευμα'] },
+    { id: '2', name: 'Τραπέζι Beta', status: 'available', currentGame: null, players: 0, startTime: null, reservedBy: null, reservedUntil: null, recentActivity: [] },
+    { id: '3', name: 'Τραπέζι Gamma', status: 'reserved', currentGame: null, players: 0, startTime: null, reservedBy: 'John D.', reservedUntil: '18:00', recentActivity: [] },
+    { id: '4', name: 'Τραπέζι Delta', status: 'in-use', currentGame: 'Ticket to Ride', players: 5, startTime: '13:00', reservedBy: null, reservedUntil: null, recentActivity: ['Ο Μόργκαν κατέλαβε τη διαδρομή Ατλάντα-Μαϊάμι', 'Ο Τέιλορ τράβηξε 2 κάρτες βαγονιών'] },
+    { id: '5', name: 'Τραπέζι Epsilon', status: 'maintenance', currentGame: null, players: 0, startTime: null, reservedBy: null, reservedUntil: null, recentActivity: [] },
+  ];
+  
+  const mockReservations: Reservation[] = [
+    { id: '1', tableId: '3', tableName: 'Τραπέζι Gamma', customerName: 'John Doe', customerEmail: 'john@example.com', date: '2024-01-15', startTime: '16:00', endTime: '20:00', players: 4, game: 'Catan', status: 'confirmed', notes: 'Πάρτι γενεθλίων' },
+    { id: '2', tableId: '1', tableName: 'Τραπέζι Alpha', customerName: 'Jane Smith', customerEmail: 'jane@example.com', date: '2024-01-15', startTime: '20:00', endTime: '23:00', players: 5, game: 'Ticket to Ride', status: 'pending', notes: '' },
+    { id: '3', tableId: '2', tableName: 'Τραπέζι Beta', customerName: 'Bob Wilson', customerEmail: 'bob@example.com', date: '2024-01-16', startTime: '14:00', endTime: '18:00', players: 2, game: 'Carcassonne', status: 'confirmed', notes: 'Πρώτη φορά' },
+  ];
+  
+  const mockSessions: GameSession[] = [
+    { 
+      id: '1', 
+      tableId: '1', 
+      tableName: 'Τραπέζι Alpha', 
+      game: 'Catan', 
+      players: [{ name: 'Alex', type: 'local' }, { name: 'Sam', type: 'local' }, { name: 'Chris', type: 'remote-pc' }, { name: 'Jordan', type: 'remote-vr' }], 
+      startTime: '14:30', 
+      duration: 90, 
+      status: 'active',
+      actions: [
+        { id: 'a1', timestamp: '14:30:00', player: 'System', action: 'Έναρξη Παιχνιδιού', details: 'Φάση αρχικής τοποθέτησης' },
+        { id: 'a2', timestamp: '14:35:12', player: 'Alex', action: 'Τοποθέτηση Οικισμού', details: 'Εντοπισμός (0, 1, -1)' },
+        { id: 'a3', timestamp: '14:36:05', player: 'Sam', action: 'Τοποθέτηση Οικισμού', details: 'Εντοπισμός (1, 0, -1)' },
+        { id: 'a4', timestamp: '14:40:22', player: 'Chris', action: 'Ρίψη Ζαριών', details: 'Αποτέλεσμα: 7' },
+        { id: 'a5', timestamp: '14:41:10', player: 'Chris', action: 'Μετακίνηση Κλέφτη', details: 'Εξάγωνο (0, 0, 0)' },
+      ]
+    },
+    { 
+      id: '2', 
+      tableId: '4', 
+      tableName: 'Τραπέζι Delta', 
+      game: 'Ticket to Ride', 
+      players: [{ name: 'Morgan', type: 'local' }, { name: 'Taylor', type: 'local' }, { name: 'Casey', type: 'local' }, { name: 'Riley', type: 'remote-pc' }, { name: 'Drew', type: 'remote-vr' }], 
+      startTime: '13:00', 
+      duration: 180, 
+      status: 'active',
+      actions: [
+        { id: 'b1', timestamp: '13:00:00', player: 'System', action: 'Έναρξη Παιχνιδιού', details: 'Μοίρασμα αρχικών καρτών' },
+        { id: 'b2', timestamp: '13:05:30', player: 'Morgan', action: 'Κατάκτηση Διαδρομής', details: 'Ατλάντα προς Μαϊάμι (5 τρένα)' },
+      ]
+    },
+  ];
 
 const mockStats: VenueStats = {
   totalTables: 5,
@@ -202,35 +201,42 @@ const diceHistoryData = [
   { roll: '12', count: 2 },
 ];
 
-const gameRules = [
-  { id: 'catan', title: 'Settlers of Catan', category: 'Strategy', players: '3-4', time: '60-120 min', description: 'Players collect resources and use them to build roads, settlements and cities on their way to victory.' },
-  { id: 'ttr', title: 'Ticket to Ride', category: 'Family', players: '2-5', time: '30-60 min', description: 'Players collect cards of various types of train cars they then use to claim railway routes in North America.' },
-  { id: 'carcassonne', title: 'Carcassonne', category: 'Tile Placement', players: '2-5', time: '30-45 min', description: 'Players draw and place a tile with a piece of southern French landscape on it.' },
-  { id: 'pandemic', title: 'Pandemic', category: 'Cooperative', players: '2-4', time: '45 min', description: 'Players must work together playing to their characters\' strengths to plan their strategy of eradication before the diseases overwhelm the world.' },
-];
+  const gameRules = [
+    { id: 'catan', title: 'Catan', category: 'Στρατηγική', players: '3-4', time: '60-120 λεπτά', description: 'Οι παίκτες συλλέγουν πόρους για να χτίσουν δρόμους, οικισμούς και πόλεις στο δρόμο προς τη νίκη.' },
+    { id: 'ttr', title: 'Ticket to Ride', category: 'Οικογενειακό', players: '2-5', time: '30-60 λεπτά', description: 'Οι παίκτες συλλέγουν κάρτες τρένων και διεκδικούν σιδηροδρομικές διαδρομές.' },
+    { id: 'carcassonne', title: 'Carcassonne', category: 'Τοποθέτηση Πλακιδίων', players: '2-5', time: '30-45 λεπτά', description: 'Οι παίκτες τοποθετούν πλακίδια για να δημιουργήσουν πόλεις, δρόμους, μοναστήρια και χωράφια.' },
+    { id: 'pandemic', title: 'Pandemic', category: 'Συνεργατικό', players: '2-4', time: '45 λεπτά', description: 'Οι παίκτες συνεργάζονται για να εξαλείψουν μεταδοτικές ασθένειες.' },
+  ];
 
 // Status badge component
-function StatusBadge({ status }: { status: Table['status'] }) {
-  const variants: Record<Table['status'], any> = {
-    'available': 'secondary',
-    'in-use': 'default',
-    'reserved': 'outline',
-    'maintenance': 'destructive',
-  };
+  function StatusBadge({ status }: { status: Table['status'] }) {
+    const variants: Record<Table['status'], any> = {
+      'available': 'secondary',
+      'in-use': 'default',
+      'reserved': 'outline',
+      'maintenance': 'destructive',
+    };
+    
+    const colors: Record<Table['status'], string> = {
+      'available': 'bg-green-500/20 text-green-400 border-green-500/30',
+      'in-use': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      'reserved': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      'maintenance': 'bg-red-500/20 text-red-400 border-red-500/30',
+    };
   
-  const colors: Record<Table['status'], string> = {
-    'available': 'bg-green-500/20 text-green-400 border-green-500/30',
-    'in-use': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'reserved': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    'maintenance': 'bg-red-500/20 text-red-400 border-red-500/30',
-  };
-
-  return (
-    <Badge variant={variants[status]} className={colors[status]}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </Badge>
-  );
-}
+    const statusText: Record<Table['status'], string> = {
+      'available': 'Διαθέσιμο',
+      'in-use': 'Σε Χρήση',
+      'reserved': 'Κρατημένο',
+      'maintenance': 'Συντήρηση',
+    };
+  
+    return (
+      <Badge variant={variants[status]} className={colors[status]}>
+        {statusText[status]}
+      </Badge>
+    );
+  }
 
 // Table card component
 function TableCard({ table, onViewSession }: { table: Table; onViewSession: (tableId: string) => void }) {
@@ -253,47 +259,47 @@ function TableCard({ table, onViewSession }: { table: Table; onViewSession: (tab
         </div>
       </CardHeader>
       <CardContent>
-        {table.status === 'in-use' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Gamepad2 className="h-4 w-4" />
-              {table.currentGame}
+          {table.status === 'in-use' && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Gamepad2 className="h-4 w-4" />
+                {table.currentGame}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Users className="h-4 w-4" />
+                {table.players} Παίκτες
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Clock className="h-4 w-4" />
+                Έναρξη στις {table.startTime}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Users className="h-4 w-4" />
-              {table.players} players
+          )}
+          
+          {table.status === 'reserved' && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <UserCheck className="h-4 w-4" />
+                Κράτηση: {table.reservedBy}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Clock className="h-4 w-4" />
+                Μέχρι {table.reservedUntil}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Clock className="h-4 w-4" />
-              Started at {table.startTime}
+          )}
+          
+          {table.status === 'available' && (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-400">Έτοιμο για νέα συνεδρία</p>
             </div>
-          </div>
-        )}
-        
-        {table.status === 'reserved' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <UserCheck className="h-4 w-4" />
-              Reserved by {table.reservedBy}
+          )}
+          
+          {table.status === 'maintenance' && (
+            <div className="space-y-2">
+              <p className="text-sm text-red-400">Υπό συντήρηση</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Clock className="h-4 w-4" />
-              Until {table.reservedUntil}
-            </div>
-          </div>
-        )}
-        
-        {table.status === 'available' && (
-          <div className="space-y-2">
-            <p className="text-sm text-slate-400">Ready for new session</p>
-          </div>
-        )}
-        
-        {table.status === 'maintenance' && (
-          <div className="space-y-2">
-            <p className="text-sm text-red-400">Under maintenance</p>
-          </div>
-        )}
+          )}
       </CardContent>
     </Card>
   );
@@ -340,39 +346,39 @@ function SessionRow({ session, onSave, onLoad, onReplay, onChat }: { session: Ga
       <td className="py-3 px-4">{session.game}</td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
-          <span className="text-green-400">{localPlayers} local</span>
+          <span className="text-green-400">{localPlayers} τοπικοί</span>
           <span className="text-slate-500">|</span>
-          <span className="text-blue-400">{remotePlayers} remote</span>
+          <span className="text-blue-400">{remotePlayers} απομακρυσμένοι</span>
         </div>
       </td>
       <td className="py-3 px-4">{session.startTime}</td>
-      <td className="py-3 px-4">{session.duration} min</td>
+      <td className="py-3 px-4">{session.duration} λεπτά</td>
       <td className="py-3 px-4">
         <span className={`px-2 py-1 text-xs rounded-full ${
           session.status === 'active' ? 'bg-green-500/20 text-green-400' :
           session.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
           'bg-slate-500/20 text-slate-400'
         }`}>
-          {session.status}
+          {session.status === 'active' ? 'Ενεργή' : session.status === 'paused' ? 'Σε παύση' : 'Ολοκληρώθηκε'}
         </span>
       </td>
       <td className="py-3 px-4">
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" title="Replay Session" onClick={() => onReplay(session.id)}>
+          <Button size="sm" variant="ghost" title="Επανάληψη Συνεδρίας" onClick={() => onReplay(session.id)}>
             <Play className="h-4 w-4 text-purple-400" />
           </Button>
           {session.status === 'active' && (
-            <Button size="sm" variant="ghost" title="Pause">
+            <Button size="sm" variant="ghost" title="Παύση">
               <Pause className="h-4 w-4" />
             </Button>
           )}
-          <Button size="sm" variant="ghost" title="Save to Local Storage" onClick={() => onSave(session.id)}>
+          <Button size="sm" variant="ghost" title="Αποθήκευση Τοπικά" onClick={() => onSave(session.id)}>
             <Save className="h-4 w-4 text-blue-400" />
           </Button>
-          <Button size="sm" variant="ghost" title="Load from Local Storage" onClick={() => onLoad(session.id)}>
+          <Button size="sm" variant="ghost" title="Φόρτωση από Τοπικά" onClick={() => onLoad(session.id)}>
             <Download className="h-4 w-4 text-green-400" />
           </Button>
-          <Button size="sm" variant="ghost" title="Chat" onClick={() => onChat(session.id)}>
+          <Button size="sm" variant="ghost" title="Συνομιλία" onClick={() => onChat(session.id)}>
             <MessageSquare className="h-4 w-4 text-orange-400" />
           </Button>
         </div>
@@ -397,15 +403,15 @@ function ReservationRow({ reservation }: { reservation: Reservation }) {
           reservation.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
           'bg-red-500/20 text-red-400'
         }`}>
-          {reservation.status}
+          {reservation.status === 'confirmed' ? 'Επιβεβαιωμένη' : reservation.status === 'pending' ? 'Σε εκκρεμότητα' : 'Ακυρωμένη'}
         </span>
       </td>
       <td className="py-3 px-4">
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost">
+          <Button size="sm" variant="ghost" title="Επεξεργασία">
             <Edit className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" className="text-red-400">
+          <Button size="sm" variant="ghost" className="text-red-400" title="Διαγραφή">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -427,6 +433,7 @@ export default function VenueDashboardPage() {
   const [selectedChatSessionId, setSelectedChatSessionId] = useState<string | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRule, setSelectedRule] = useState<typeof gameRules[0] | null>(null);
   
   // Replay state
   const [replayStep, setReplayStep] = useState(0);
@@ -494,36 +501,36 @@ export default function VenueDashboardPage() {
               <Building2 className="h-8 w-8 text-purple-400 shrink-0" />
               <div>
                 <h1 className="text-xl font-bold text-white">TableForge Board Games</h1>
-                <p className="text-sm text-slate-400">Board Game Platform Management</p>
+                <p className="text-sm text-slate-400">Διαχείριση Πλατφόρμας Επιτραπέζιων Παιχνιδιών</p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => window.location.href = '/'}>
                 <Library className="h-4 w-4 mr-2" />
-                <span className="hidden xs:inline">Game Library</span>
-                <span className="xs:hidden">Library</span>
+                <span className="hidden xs:inline">Βιβλιοθήκη Παιχνιδιών</span>
+                <span className="xs:hidden">Βιβλιοθήκη</span>
               </Button>
               <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                 <Settings className="h-4 w-4 mr-2" />
-                <span className="hidden xs:inline">Settings</span>
+                <span className="hidden xs:inline">Ρυθμίσεις</span>
               </Button>
               <Button size="sm" className="bg-purple-600 hover:bg-purple-700 flex-1 sm:flex-none" onClick={() => setIsReservationDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden xs:inline">New Reservation</span>
-                <span className="xs:hidden">New</span>
+                <span className="hidden xs:inline">Νέα Κράτηση</span>
+                <span className="xs:hidden">Νέα</span>
               </Button>
               <Dialog open={isReservationDialogOpen} onOpenChange={setIsReservationDialogOpen}>
                 <DialogContent className="bg-slate-800 border-slate-700">
                   <DialogHeader>
-                    <DialogTitle>New Reservation</DialogTitle>
+                    <DialogTitle>Νέα Κράτηση</DialogTitle>
                     <DialogDescription>
-                      Create a new table reservation for a customer.
+                      Δημιουργήστε μια νέα κράτηση τραπεζιού για έναν πελάτη.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Customer Name</Label>
+                        <Label>Όνομα Πελάτη</Label>
                         <Input placeholder="John Doe" className="bg-slate-700 border-slate-600" />
                       </div>
                       <div className="space-y-2">
@@ -533,10 +540,10 @@ export default function VenueDashboardPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Table</Label>
+                        <Label>Τραπέζι</Label>
                         <Select>
                           <SelectTrigger className="bg-slate-700 border-slate-600">
-                            <SelectValue placeholder="Select table" />
+                            <SelectValue placeholder="Επιλογή Τραπεζιού" />
                           </SelectTrigger>
                           <SelectContent>
                             {tables.filter(t => t.status === 'available').map(table => (
@@ -546,13 +553,13 @@ export default function VenueDashboardPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Game</Label>
+                        <Label>Παιχνίδι</Label>
                         <Select>
                           <SelectTrigger className="bg-slate-700 border-slate-600">
-                            <SelectValue placeholder="Select game" />
+                            <SelectValue placeholder="Επιλογή Παιχνιδιού" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="catan">Settlers of Catan</SelectItem>
+                            <SelectItem value="catan">Catan</SelectItem>
                             <SelectItem value="ttr">Ticket to Ride</SelectItem>
                             <SelectItem value="carcassonne">Carcassonne</SelectItem>
                             <SelectItem value="pandemic">Pandemic</SelectItem>
@@ -562,24 +569,24 @@ export default function VenueDashboardPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Date</Label>
+                        <Label>Ημερομηνία</Label>
                         <Input type="date" className="bg-slate-700 border-slate-600" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Start Time</Label>
+                        <Label>Ώρα Έναρξης</Label>
                         <Input type="time" className="bg-slate-700 border-slate-600" />
                       </div>
                       <div className="space-y-2">
-                        <Label>End Time</Label>
+                        <Label>Ώρα Λήξης</Label>
                         <Input type="time" className="bg-slate-700 border-slate-600" />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Number of Players</Label>
+                      <Label>Αριθμός Παίκτων</Label>
                       <Input type="number" min="2" max="10" defaultValue="4" className="bg-slate-700 border-slate-600" />
                     </div>
                     <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => setIsReservationDialogOpen(false)}>
-                      Create Reservation
+                      Δημιουργία Κράτησης
                     </Button>
                   </div>
                 </DialogContent>
@@ -594,31 +601,31 @@ export default function VenueDashboardPage() {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatsCard 
-            title="Active Tables" 
+            title="Ενεργά Τραπέζια" 
             value={`${stats.activeTables}/${stats.totalTables}`}
             icon={Monitor}
-            trend="2 more than yesterday"
+            trend="2 περισσότερα από χθες"
             trendUp={true}
           />
           <StatsCard 
-            title="Sessions Today" 
+            title="Συνεδρίες Σήμερα" 
             value={stats.totalSessionsToday}
             icon={Gamepad2}
-            trend="+25% vs last week"
+            trend="+25% έναντι προηγ. εβδομάδας"
             trendUp={true}
           />
           <StatsCard 
-            title="Players Today" 
+            title="Παίκτες Σήμερα" 
             value={stats.totalPlayersToday}
             icon={Users}
-            trend={`${stats.remotePlayersPercent}% remote`}
+            trend={`${stats.remotePlayersPercent}% απομακρυσμένοι`}
             trendUp={true}
           />
           <StatsCard 
-            title="Revenue Today" 
+            title="Έσοδα Σήμερα" 
             value={`€${stats.revenueToday}`}
             icon={DollarSign}
-            trend="+12% vs yesterday"
+            trend="+12% έναντι χθες"
             trendUp={true}
           />
         </div>
@@ -629,23 +636,23 @@ export default function VenueDashboardPage() {
             <TabsList className="bg-slate-800 border-slate-700 inline-flex w-auto min-w-full sm:w-full">
               <TabsTrigger value="tables" className="data-[state=active]:bg-purple-600 whitespace-nowrap">
                 <Monitor className="h-4 w-4 mr-2" />
-                Tables
+                Τραπέζια
               </TabsTrigger>
               <TabsTrigger value="sessions" className="data-[state=active]:bg-purple-600 whitespace-nowrap">
                 <Play className="h-4 w-4 mr-2" />
-                Active Sessions
+                Ενεργές Συνεδρίες
               </TabsTrigger>
               <TabsTrigger value="reservations" className="data-[state=active]:bg-purple-600 whitespace-nowrap">
                 <Calendar className="h-4 w-4 mr-2" />
-                Reservations
+                Κρατήσεις
               </TabsTrigger>
               <TabsTrigger value="rules" className="data-[state=active]:bg-purple-600 whitespace-nowrap">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Rules Reference
+                Κανόνες Παιχνιδιών
               </TabsTrigger>
               <TabsTrigger value="analytics" className="data-[state=active]:bg-purple-600 whitespace-nowrap">
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
+                Αναλυτικά Στοιχεία
               </TabsTrigger>
             </TabsList>
           </div>
@@ -663,7 +670,7 @@ export default function VenueDashboardPage() {
               <Card className="bg-slate-800/30 border-slate-700 border-dashed flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-slate-800/50 transition-colors">
                 <div className="text-center">
                   <Plus className="h-8 w-8 text-slate-500 mx-auto mb-2" />
-                  <p className="text-slate-400">Add New Table</p>
+                  <p className="text-slate-400">Προσθήκη Νέου Τραπεζιού</p>
                 </div>
               </Card>
             </div>
@@ -673,8 +680,8 @@ export default function VenueDashboardPage() {
           <TabsContent value="sessions">
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
-                <CardTitle>Active Game Sessions</CardTitle>
-                <CardDescription>Monitor and manage ongoing games</CardDescription>
+                  <CardTitle className="text-xl font-bold text-white">Ενεργές Συνεδρίες</CardTitle>
+                  <CardDescription className="text-slate-500">Παρακολουθήστε και διαχειριστείτε τα παιχνίδια σε εξέλιξη</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Mobile Card View */}
@@ -696,22 +703,22 @@ export default function VenueDashboardPage() {
                           </Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="text-slate-500">Players:</div>
-                          <div className="text-slate-300">{session.players.length} ({session.players.filter(p => p.type === 'local').length}L / {session.players.filter(p => p.type !== 'local').length}R)</div>
-                          <div className="text-slate-500">Started:</div>
+                          <div className="text-slate-500">Παίκτες:</div>
+                          <div className="text-slate-300">{session.players.length} ({session.players.filter(p => p.type === 'local').length}Τ / {session.players.filter(p => p.type !== 'local').length}Α)</div>
+                          <div className="text-slate-500">Έναρξη:</div>
                           <div className="text-slate-300">{session.startTime}</div>
-                          <div className="text-slate-500">Duration:</div>
-                          <div className="text-slate-300">{session.duration} min</div>
+                          <div className="text-slate-500">Διάρκεια:</div>
+                          <div className="text-slate-300">{session.duration} λεπτά</div>
                         </div>
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
                           <Button size="sm" variant="outline" className="flex-1" onClick={() => handleSaveSession(session.id)}>
-                            <Save className="h-4 w-4 mr-2" /> Save
+                            <Save className="h-4 w-4 mr-2" /> Αποθήκ.
                           </Button>
                           <Button size="sm" variant="outline" className="flex-1" onClick={() => handleLoadSession(session.id)}>
-                            <Download className="h-4 w-4 mr-2" /> Load
+                            <Download className="h-4 w-4 mr-2" /> Φόρτωση
                           </Button>
                           <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelectedChatSessionId(session.id)}>
-                            <MessageSquare className="h-4 w-4 mr-2" /> Chat
+                            <MessageSquare className="h-4 w-4 mr-2" /> Συνομ.
                           </Button>
                         </div>
                       </CardContent>
@@ -724,13 +731,13 @@ export default function VenueDashboardPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-slate-700 text-left text-sm text-slate-400">
-                        <th className="py-3 px-4">Table</th>
-                        <th className="py-3 px-4">Game</th>
-                        <th className="py-3 px-4">Players</th>
-                        <th className="py-3 px-4">Started</th>
-                        <th className="py-3 px-4">Duration</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4">Actions</th>
+                        <th className="py-3 px-4">Τραπέζι</th>
+                        <th className="py-3 px-4">Παιχνίδι</th>
+                        <th className="py-3 px-4">Παίκτες</th>
+                        <th className="py-3 px-4">Έναρξη</th>
+                        <th className="py-3 px-4">Διάρκεια</th>
+                        <th className="py-3 px-4">Κατάσταση</th>
+                        <th className="py-3 px-4">Ενέργειες</th>
                       </tr>
                     </thead>
                     <tbody className="text-sm">
@@ -761,12 +768,12 @@ export default function VenueDashboardPage() {
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>Reservations</CardTitle>
-                    <CardDescription>Upcoming and pending reservations</CardDescription>
+                    <CardTitle className="text-xl font-bold text-white">Κρατήσεις</CardTitle>
+                    <CardDescription className="text-slate-500">Προγραμματισμένες και εκκρεμείς κρατήσεις</CardDescription>
                   </div>
                   <Button size="sm" className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto" onClick={() => setIsReservationDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    New Reservation
+                    Νέα Κράτηση
                   </Button>
                 </div>
               </CardHeader>
@@ -790,19 +797,19 @@ export default function VenueDashboardPage() {
                           </Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="text-slate-500">Date:</div>
+                          <div className="text-slate-500">Ημερομηνία:</div>
                           <div className="text-slate-300">{reservation.date}</div>
-                          <div className="text-slate-500">Time:</div>
+                          <div className="text-slate-500">Ώρα:</div>
                           <div className="text-slate-300">{reservation.startTime} - {reservation.endTime}</div>
-                          <div className="text-slate-500">Players:</div>
+                          <div className="text-slate-500">Παίκτες:</div>
                           <div className="text-slate-300">{reservation.players}</div>
                         </div>
                         <div className="flex gap-2 pt-2 border-t border-slate-800">
                           <Button size="sm" variant="ghost" className="flex-1">
-                            <Edit className="h-4 w-4 mr-2" /> Edit
+                            <Edit className="h-4 w-4 mr-2" /> Επεξεργασία
                           </Button>
                           <Button size="sm" variant="ghost" className="flex-1 text-red-400">
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            <Trash2 className="h-4 w-4 mr-2" /> Διαγραφή
                           </Button>
                         </div>
                       </CardContent>
@@ -855,7 +862,7 @@ export default function VenueDashboardPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredRules.map(rule => (
-                    <Card key={rule.id} className="bg-slate-900 border-slate-700 hover:border-purple-500/50 transition-colors cursor-pointer">
+                    <Card key={rule.id} className="bg-slate-900 border-slate-700 hover:border-purple-500/50 transition-colors cursor-pointer" onClick={() => setSelectedRule(rule)}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-lg text-white">{rule.title}</h3>
@@ -889,9 +896,9 @@ export default function VenueDashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-purple-400" />
-                    Global Dice Roll History
+                    Ιστορικό Ζαριών Συνολικά
                   </CardTitle>
-                  <CardDescription>Distribution of dice rolls across all active sessions</CardDescription>
+                  <CardDescription>Κατανομή ρίψεων ζαριών σε όλες τις ενεργές συνεδρίες</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] w-full">
@@ -916,9 +923,9 @@ export default function VenueDashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-purple-400" />
-                    Popular Games
+                    Δημοφιλή Παιχνίδια
                   </CardTitle>
-                  <CardDescription>Most played games this week</CardDescription>
+                  <CardDescription>Παιχνίδια με τις περισσότερες συνεδρίες αυτή την εβδομάδα</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -929,7 +936,7 @@ export default function VenueDashboardPage() {
                           <p className="font-medium text-white">{game.name}</p>
                           <Progress value={(game.sessions / stats.popularGames[0].sessions) * 100} className="h-2 mt-1" />
                         </div>
-                        <span className="text-sm text-slate-400">{game.sessions} sessions</span>
+                        <span className="text-sm text-slate-400">{game.sessions} συνεδρίες</span>
                       </div>
                     ))}
                   </div>
@@ -941,23 +948,23 @@ export default function VenueDashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-purple-400" />
-                    Session Statistics
+                    Στατιστικά Συνεδριών
                   </CardTitle>
-                  <CardDescription>Key metrics for your venue</CardDescription>
+                  <CardDescription>Βασικές μετρήσεις του χώρου σας</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
                     <div>
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Average Session Duration</span>
-                        <span className="text-white font-medium">{stats.averageSessionDuration} min</span>
+                        <span className="text-slate-400">Μέση Διάρκεια Συνεδρίας</span>
+                        <span className="text-white font-medium">{stats.averageSessionDuration} λεπτά</span>
                       </div>
                       <Progress value={72} className="h-3" />
                     </div>
                     
                     <div>
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Remote Players</span>
+                        <span className="text-slate-400">Απομακρυσμένοι Παίκτες</span>
                         <span className="text-white font-medium">{stats.remotePlayersPercent}%</span>
                       </div>
                       <Progress value={stats.remotePlayersPercent} className="h-3" />
@@ -965,26 +972,26 @@ export default function VenueDashboardPage() {
                     
                     <div>
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Table Utilization</span>
+                        <span className="text-slate-400">Χρήση Τραπεζιών</span>
                         <span className="text-white font-medium">{Math.round((stats.activeTables / stats.totalTables) * 100)}%</span>
                       </div>
                       <Progress value={(stats.activeTables / stats.totalTables) * 100} className="h-3" />
                     </div>
 
                     <div className="pt-4 border-t border-slate-700">
-                      <h4 className="text-sm font-medium text-slate-400 mb-3">Player Distribution</h4>
+                      <h4 className="text-sm font-medium text-slate-400 mb-3">Κατανομή Παίκτων</h4>
                       <div className="flex gap-4">
                         <div className="flex-1 text-center p-3 bg-slate-700/50 rounded-lg">
                           <p className="text-2xl font-bold text-green-400">{Math.round(stats.totalPlayersToday * (1 - stats.remotePlayersPercent / 100))}</p>
-                          <p className="text-xs text-slate-400">Local Players</p>
+                          <p className="text-xs text-slate-400">Τοπικοί Παίκτες</p>
                         </div>
                         <div className="flex-1 text-center p-3 bg-slate-700/50 rounded-lg">
                           <p className="text-2xl font-bold text-blue-400">{Math.round(stats.totalPlayersToday * (stats.remotePlayersPercent / 100) * 0.6)}</p>
-                          <p className="text-xs text-slate-400">Remote PC</p>
+                          <p className="text-xs text-slate-400">Απομακρυσμένοι (PC)</p>
                         </div>
                         <div className="flex-1 text-center p-3 bg-slate-700/50 rounded-lg">
                           <p className="text-2xl font-bold text-purple-400">{Math.round(stats.totalPlayersToday * (stats.remotePlayersPercent / 100) * 0.4)}</p>
-                          <p className="text-xs text-slate-400">Remote VR</p>
+                          <p className="text-xs text-slate-400">Απομακρυσμένοι (VR)</p>
                         </div>
                       </div>
                     </div>
@@ -1249,6 +1256,54 @@ export default function VenueDashboardPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      <Sheet open={!!selectedRule} onOpenChange={(open) => !open && setSelectedRule(null)}>
+        <SheetContent className="bg-slate-900 border-slate-800 text-slate-200 overflow-y-auto w-full sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle className="text-white text-2xl font-black">{selectedRule?.title}</SheetTitle>
+            <SheetDescription className="text-slate-400">
+              <Badge variant="outline" className="mt-2 bg-purple-500/10 text-purple-400 border-purple-500/20">{selectedRule?.category}</Badge>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-8 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                <span className="flex items-center gap-2 text-slate-400 mb-1"><Users className="h-4 w-4 text-primary" /> Αριθμός Παίκτων</span>
+                <span className="font-medium text-white">{selectedRule?.players}</span>
+              </div>
+              <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                <span className="flex items-center gap-2 text-slate-400 mb-1"><Clock className="h-4 w-4 text-primary" /> Εκτιμώμενος Χρόνος</span>
+                <span className="font-medium text-white">{selectedRule?.time}</span>
+              </div>
+            </div>
+            
+            <div className="pt-6 border-t border-slate-800">
+              <h4 className="text-xl font-bold text-white mb-4">Περιγραφή & Κανόνες</h4>
+              <p className="text-slate-300 leading-relaxed text-base whitespace-pre-wrap">
+                {selectedRule?.description}
+              </p>
+              
+              <div className="mt-8 space-y-4">
+                <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+                  <h5 className="font-bold text-primary mb-2">Στόχος του παιχνιδιού</h5>
+                  <p className="text-sm text-slate-300">
+                    Οι παίκτες ανταγωνίζονται για να μαζέψουν πόντους νίκης χτίζοντας, κάνοντας εμπόριο και επεκτείνοντας την επιρροή τους.
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                  <h5 className="font-bold text-white mb-2">Βασικές Φάσεις</h5>
+                  <ol className="list-decimal list-inside text-sm text-slate-400 space-y-2">
+                    <li><strong className="text-slate-200">Συλλογή πόρων:</strong> Риψη ζαριών και διανομή πρώτων υλών.</li>
+                    <li><strong className="text-slate-200">Εμπόριο:</strong> Ανταλλαγή πόρων με άλλους παίκτες ή την τράπεζα.</li>
+                    <li><strong className="text-slate-200">Κατασκευή:</strong> Χρήση πόρων για δρόμους, οικισμούς κλπ.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

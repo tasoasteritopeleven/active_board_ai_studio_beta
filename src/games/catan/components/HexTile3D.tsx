@@ -155,9 +155,64 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
   const pendingRobberHexId = useCatanStore(state => state.pendingRobberHexId);
   const setPendingRobberHexId = useCatanStore(state => state.setPendingRobberHexId);
 
+  const vertices = useCatanStore(state => state.vertices);
+  const players = useCatanStore(state => state.players);
+
+  const hexOwnerInfos = useMemo(() => {
+    const HEX_SIZE = 1.0;
+    const playerPoints: Record<string, number> = {};
+    let dominantPlayerId = null;
+    let maxPoints = 0;
+
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 6 + i * (Math.PI / 3);
+      const vx = hex.position.x + HEX_SIZE * Math.cos(angle);
+      const vz = hex.position.z + HEX_SIZE * Math.sin(angle);
+      const key = `${vx.toFixed(2)},${vz.toFixed(2)}`;
+      
+      const building = vertices[key]?.building;
+      if (building) {
+        const points = building.type === 'CITY' ? 2 : 1;
+        playerPoints[building.ownerId] = (playerPoints[building.ownerId] || 0) + points;
+        if (playerPoints[building.ownerId] > maxPoints) {
+          maxPoints = playerPoints[building.ownerId];
+          dominantPlayerId = building.ownerId;
+        }
+      }
+    }
+    
+    if (dominantPlayerId) {
+       return {
+         playerId: dominantPlayerId,
+         name: players[dominantPlayerId]?.name || '',
+         color: players[dominantPlayerId]?.color || '#ffffff'
+       };
+    }
+    return null;
+  }, [hex.position.x, hex.position.z, vertices, players]);
+
   const hasRobber = robberHexId === hex.id;
   const isPendingRobber = pendingRobberHexId === hex.id;
   const isInteractable = robberMode && !hasRobber && hex.terrain !== TerrainType.WATER;
+
+  // Resource tokens hover animation
+  useFrame((state) => {
+    if (groupRef.current) {
+        // Find all resource token groups and animate them
+        groupRef.current.children.forEach((child) => {
+           if (child.name === 'resource-props') {
+             child.children.forEach((prop, i) => {
+                 prop.position.y += Math.sin(state.clock.elapsedTime * 2 + i) * 0.0002;
+                 prop.rotation.y += 0.002;
+             });
+           }
+        });
+    }
+  });
+
+  const diceResult = useCatanStore(state => state.diceResult);
+  const lastDiceRoll = diceResult ? diceResult[0] + diceResult[1] : null;
+  const isJustRolled = lastDiceRoll === hex.numberToken && hex.terrain !== TerrainType.DESERT && !hasRobber;
 
   useFrame(() => {
     const elapsed = (Date.now() - startTime.current) / 1000;
@@ -191,10 +246,10 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
       } else if (elapsed < tokenDelay + 0.4) {
         const t = (elapsed - tokenDelay) / 0.4;
         const ease = 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
-        tokenGroupRef.current.position.y = THREE.MathUtils.lerp(10, 0.4, ease);
+        tokenGroupRef.current.position.y = THREE.MathUtils.lerp(10, 0.125, ease);
         tokenGroupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.01, 1, ease));
       } else {
-        tokenGroupRef.current.position.y = 0.4;
+        tokenGroupRef.current.position.y = 0.125;
         tokenGroupRef.current.scale.setScalar(1);
       }
 
@@ -232,29 +287,52 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
       <group>
         <mesh geometry={hexGeometry}>
           <meshStandardMaterial 
-            color={isInteractable && hovered ? '#fcd34d' : color} 
+            color={isInteractable ? (hovered ? '#fcd34d' : new THREE.Color(color).lerp(new THREE.Color('#fcd34d'), 0.2).getHexString()) : color} 
             roughness={0.8} 
-            emissive={isInteractable && hovered ? '#fcd34d' : '#000000'}
-            emissiveIntensity={isInteractable && hovered ? 0.2 : 0}
+            emissive={isInteractable ? (hovered ? '#fcd34d' : '#fcd34d') : '#000000'}
+            emissiveIntensity={isInteractable ? (hovered ? 0.3 : 0.1) : 0}
           />
         </mesh>
         {/* Hex Border */}
         <mesh geometry={hexBorderGeometry} position={[0, -0.01, 0]}>
-          <meshStandardMaterial color={isPendingRobber ? '#ef4444' : '#e2e8f0'} roughness={0.9} />
+          <meshStandardMaterial 
+            color={isPendingRobber ? '#ef4444' : (isInteractable ? '#f59e0b' : (hexOwnerInfos ? hexOwnerInfos.color : '#e2e8f0'))} 
+            roughness={0.9} 
+            emissive={isPendingRobber ? '#ef4444' : '#000000'}
+            emissiveIntensity={isPendingRobber ? 0.5 : 0}
+          />
         </mesh>
       </group>
+
+      {/* Hex Owner Text */}
+      {hexOwnerInfos && (
+        <group position={[0, 0.45, 0]}>
+          <Text
+            fontSize={0.16}
+            color={hexOwnerInfos.color}
+            anchorX="center"
+            anchorY="middle"
+            fontWeight="bold"
+            outlineWidth={0.015}
+            outlineColor="#000000"
+            rotation={[-Math.PI / 3, 0, 0]}
+          >
+            {hexOwnerInfos.name}
+          </Text>
+        </group>
+      )}
 
       {/* Robber */}
       {hasRobber && <Robber position={[0, 0.2, 0]} />}
       {isPendingRobber && (
-        <group opacity={0.5} transparent>
+        <group>
           <Robber position={[0, 0.2, 0]} />
         </group>
       )}
 
       {/* Terrain Props */}
       {hex.terrain === TerrainType.FOREST && (
-        <group>
+        <group name="resource-props">
           <Tree position={[-0.3, 0.1, -0.3]} scale={1.2} />
           <Tree position={[0.3, 0.1, -0.2]} scale={0.9} />
           <Tree position={[-0.1, 0.1, 0.4]} scale={1.1} />
@@ -264,7 +342,7 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
         </group>
       )}
       {hex.terrain === TerrainType.MOUNTAINS && (
-        <group>
+        <group name="resource-props">
           <Mountain position={[-0.45, 0.1, -0.45]} scale={1.0} />
           <Mountain position={[0.55, 0.1, 0.2]} scale={0.8} />
           <Mountain position={[-0.3, 0.1, 0.55]} scale={0.9} />
@@ -273,7 +351,7 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
         </group>
       )}
       {hex.terrain === TerrainType.PASTURE && (
-        <group>
+        <group name="resource-props">
           <Sheep position={[-0.3, 0.1, -0.2]} rotation={Math.PI / 4} />
           <Sheep position={[0.2, 0.1, 0.3]} rotation={-Math.PI / 3} />
           <Sheep position={[0.4, 0.1, -0.1]} rotation={Math.PI / 2} />
@@ -284,12 +362,12 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
         </group>
       )}
       {hex.terrain === TerrainType.FIELDS && (
-        <group>
+        <group name="resource-props">
           <Wheat position={[0, 0, 0]} />
         </group>
       )}
       {hex.terrain === TerrainType.HILLS && (
-        <group>
+        <group name="resource-props">
           <BrickPile position={[-0.4, 0.1, -0.3]} rotation={Math.PI / 6} />
           <BrickPile position={[0.4, 0.1, 0.2]} rotation={-Math.PI / 4} />
           <BrickPile position={[-0.2, 0.1, 0.5]} rotation={Math.PI / 3} />
@@ -312,46 +390,55 @@ export function HexTile3D({ hex, index }: HexTile3DProps) {
           <group ref={tokenMeshRef}>
             <mesh>
               <cylinderGeometry args={[0.3, 0.3, 0.05, 32]} />
-              <meshStandardMaterial color="#fdf6e3" roughness={0.5} />
+              <meshStandardMaterial 
+                color="#fdf6e3" 
+                roughness={0.5} 
+                emissive={isJustRolled ? "#fbbf24" : "#000000"} 
+                emissiveIntensity={isJustRolled ? 0.8 : 0} 
+              />
             </mesh>
             
             {/* Letter (Top side initially) */}
             {hex.letterToken && (
               <Text
-                position={[0, 0.026, 0]}
+                position={[0, 0.045, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 fontSize={0.25}
                 color="#1e293b"
                 anchorX="center"
                 anchorY="middle"
                 fontWeight="bold"
+                depthOffset={-1}
               >
                 {hex.letterToken}
               </Text>
             )}
 
             {/* Number (Bottom side initially, becomes top after flip) */}
-            <group position={[0, -0.026, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <Text
-                position={[0, 0, 0]}
-                fontSize={0.25}
-                color={hex.numberToken === 6 || hex.numberToken === 8 ? '#dc2626' : '#1e293b'}
-                anchorX="center"
-                anchorY="middle"
-                fontWeight="bold"
-              >
-                {hex.numberToken.toString()}
-              </Text>
-              {/* Probability Pips */}
-              <group position={[0, -0.15, 0]}>
-                {Array.from({ length: 6 - Math.abs(7 - hex.numberToken) }).map((_, i, arr) => (
-                  <mesh key={i} position={[(i - (arr.length - 1) / 2) * 0.06, 0, 0]}>
-                    <circleGeometry args={[0.02, 16]} />
-                    <meshBasicMaterial color={hex.numberToken === 6 || hex.numberToken === 8 ? '#dc2626' : '#1e293b'} />
-                  </mesh>
-                ))}
+            {hex.numberToken > 0 && (
+              <group position={[0, -0.045, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <Text
+                  position={[0, 0, 0]}
+                  fontSize={0.25}
+                  color={hex.numberToken === 6 || hex.numberToken === 8 ? '#dc2626' : '#1e293b'}
+                  anchorX="center"
+                  anchorY="middle"
+                  fontWeight="bold"
+                  depthOffset={-1}
+                >
+                  {hex.numberToken.toString()}
+                </Text>
+                {/* Probability Pips */}
+                <group position={[0, -0.15, 0.005]}>
+                  {Array.from({ length: Math.max(0, 6 - Math.abs(7 - hex.numberToken)) }).map((_, i, arr) => (
+                    <mesh key={i} position={[(i - (arr.length - 1) / 2) * 0.06, 0, 0]}>
+                      <circleGeometry args={[0.02, 16]} />
+                      <meshBasicMaterial color={hex.numberToken === 6 || hex.numberToken === 8 ? '#dc2626' : '#1e293b'} />
+                    </mesh>
+                  ))}
+                </group>
               </group>
-            </group>
+            )}
           </group>
         </group>
       )}

@@ -11,11 +11,12 @@ import {
   Bell,
   Menu,
   X,
-  Sword,
+  Library,
   Building2,
   ChevronRight,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,19 +29,19 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const sidebarItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', active: true },
-    { icon: Gamepad2, label: 'My Games', path: '/games' },
-    { icon: Users, label: 'Friends', path: '#' },
-    { icon: Sword, label: 'Army Builder', path: '/army-builder' },
-    { icon: Trophy, label: 'Achievements', path: '/player' },
-    { icon: Building2, label: 'Venue', path: '/venue' },
-    { icon: Settings, label: 'Settings', path: '#' },
+    { icon: LayoutDashboard, label: 'Επισκόπηση', path: '/dashboard', active: true },
+    { icon: Gamepad2, label: 'Τα Παιχνίδια Μου', path: '/games' },
+    { icon: Users, label: 'Φίλοι', path: '#' },
+    { icon: Library, label: 'Συλλογή', path: '/army-builder' },
+    { icon: Trophy, label: 'Επιτεύγματα', path: '/player' },
+    { icon: Building2, label: 'Χώροι', path: '/venue' },
+    { icon: Settings, label: 'Ρυθμίσεις', path: '#' },
   ];
 
   const recentGames = [
-    { id: '1', name: 'Warhammer 40k', players: 2, status: 'In Progress', time: '2h ago', system: 'Risk Engine' },
-    { id: '2', name: 'D&D Session', players: 5, status: 'Scheduled', time: 'Tomorrow', system: 'TableForge Core' },
-    { id: '3', name: 'Risk Global', players: 4, status: 'Completed', time: '2 days ago', system: 'Risk Engine' },
+    { id: '1', name: 'Catan', players: 4, status: 'Σε εξέλιξη', time: 'πριν 2 ώρες', system: 'TableForge Core' },
+    { id: '2', name: 'D&D Session', players: 5, status: 'Προγραμματισμένο', time: 'Αύριο', system: 'TableForge Core' },
+    { id: '3', name: 'Terraforming Mars', players: 4, status: 'Ολοκληρώθηκε', time: 'πριν 2 μέρες', system: 'Board Game Engine' },
   ];
 
   return (
@@ -71,7 +72,7 @@ export default function DashboardPage() {
           <SheetContent side="left" className="w-64 p-0 bg-slate-900 border-slate-800">
             <div className="flex flex-col h-full">
               <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                <span className="font-bold text-xl text-white">Menu</span>
+                <span className="font-bold text-xl text-white">Μενού</span>
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
                   <X className="h-6 w-6" />
                 </Button>
@@ -137,7 +138,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">John Doe</p>
-                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider truncate">Elite Commander</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider truncate">Pro Player</p>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-white transition-colors" />
             </div>
@@ -151,7 +152,7 @@ export default function DashboardPage() {
             <div className="hidden lg:flex items-center justify-between gap-4">
               <div className="relative flex-1 max-w-md group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-primary transition-colors" />
-                <Input placeholder="Search games, players, venues..." className="pl-10 bg-slate-900/50 border-slate-800 focus:border-primary/50 transition-all" />
+                <Input placeholder="Αναζήτηση παιχνιδιών, παικτών, χώρων..." className="pl-10 bg-slate-900/50 border-slate-800 focus:border-primary/50 transition-all" />
               </div>
               <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-slate-800">
@@ -160,7 +161,7 @@ export default function DashboardPage() {
                 </Button>
                 <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20" onClick={() => navigate('/lobby/NEW-GAME')}>
                   <Plus className="h-4 w-4" />
-                  New Battle
+                  Νέα Συνεδρία
                 </Button>
               </div>
             </div>
@@ -170,24 +171,24 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
                   <Sparkles className="h-3 w-3" />
-                  Season 4 Active
+                  Σεζόν 4 Ενεργή
                 </div>
-                <h1 className="text-4xl font-extrabold text-white tracking-tight">Welcome back, Commander</h1>
-                <p className="text-slate-400 font-medium">Your armies are ready for deployment. <span className="text-primary">3 games</span> active across the sector.</p>
+                <h1 className="text-[18.2px] font-extrabold text-white tracking-tight">Καλώς όρισες, Παίκτη</h1>
+                <p className="text-slate-400 font-medium">Τα παιχνίδια σου είναι έτοιμα. <span className="text-primary">3 συνεδρίες</span> ενεργές στην πλατφόρμα.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white w-full sm:w-auto" onClick={() => navigate('/player')}>View Profile</Button>
-                <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white w-full sm:w-auto" onClick={() => navigate('/venue')}>Venue Dashboard</Button>
+                <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white w-full sm:w-auto" onClick={() => navigate('/player')}>Προφίλ</Button>
+                <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white w-full sm:w-auto" onClick={() => navigate('/venue')}>Διαχείριση Χώρου</Button>
               </div>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: 'Total Wins', value: '124', trend: '+12%', trendUp: true, icon: Trophy, color: 'text-yellow-500' },
-                { label: 'Hours Played', value: '452h', trend: '12 systems', trendUp: true, icon: Gamepad2, color: 'text-purple-500' },
-                { label: 'Global Rank', value: '#1,240', trend: 'Top 5%', trendUp: true, icon: Sparkles, color: 'text-primary' },
-                { label: 'Active Battles', value: '3', trend: '2 turns pending', trendUp: false, icon: Sword, color: 'text-red-500' },
+                { label: 'Συνολικές Νίκες', value: '124', trend: '+12%', trendUp: true, icon: Trophy, color: 'text-yellow-500' },
+                { label: 'Ώρες Παιχνιδιού', value: '452ω', trend: '12 παιχνίδια', trendUp: true, icon: Gamepad2, color: 'text-purple-500' },
+                { label: 'Παγκόσμια Κατάταξη', value: '#1,240', trend: 'Top 5%', trendUp: true, icon: Sparkles, color: 'text-primary' },
+                { label: 'Ενεργές Συνεδρίες', value: '3', trend: '2 εκκρεμείς', trendUp: false, icon: Zap, color: 'text-red-500' },
               ].map((stat) => (
                 <Card key={stat.label} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-all duration-300 group">
                   <CardHeader className="pb-2">
@@ -197,7 +198,7 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-black text-white tracking-tight">{stat.value}</div>
+                    <div className="text-[15px] font-black text-white tracking-tight">{stat.value}</div>
                     <p className={`text-xs font-bold mt-1 ${stat.trendUp ? 'text-green-500' : 'text-slate-500'}`}>
                       {stat.trend}
                     </p>
@@ -212,10 +213,10 @@ export default function DashboardPage() {
               <Card className="lg:col-span-2 bg-slate-900/50 border-slate-800">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle className="text-xl font-bold text-white">Recent Battles</CardTitle>
-                    <CardDescription className="text-slate-500">Your latest wargaming sessions</CardDescription>
+                    <CardTitle className="text-[17px] font-bold text-white">Πρόσφατες Συνεδρίες</CardTitle>
+                    <CardDescription className="text-slate-500">Οι τελευταίες σας συνεδρίες επιτραπέζιων</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10">View All</Button>
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10">Προβολή Όλων</Button>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -231,15 +232,15 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <p className="font-bold text-white group-hover:text-primary transition-colors">{game.name}</p>
-                            <p className="text-xs text-slate-500 font-medium">{game.players} Players • {game.time} • <span className="text-slate-600 italic">{game.system}</span></p>
+                            <p className="text-xs text-slate-500 font-medium">{game.players} Παίκτες • {game.time} • <span className="text-slate-600 italic">{game.system}</span></p>
                           </div>
                         </div>
                         <div className="text-right">
                           <Badge 
                             variant="outline" 
                             className={`font-bold uppercase tracking-wider text-[10px] ${
-                              game.status === 'In Progress' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' :
-                              game.status === 'Scheduled' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/5' :
+                              game.status === 'Σε εξέλιξη' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' :
+                              game.status === 'Προγραμματισμένο' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/5' :
                               'border-green-500/30 text-green-400 bg-green-500/5'
                             }`}
                           >
@@ -256,39 +257,39 @@ export default function DashboardPage() {
               <div className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-800">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold text-white">Quick Actions</CardTitle>
+                    <CardTitle className="text-[15px] font-bold text-white">Γρήγορες Ενέργειες</CardTitle>
                   </CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3">
                     <Button variant="outline" className="h-24 flex-col gap-2 border-slate-800 bg-slate-950/50 hover:bg-slate-800 hover:border-primary/50 transition-all group" onClick={() => navigate('/lobby/HOST')}>
                       <div className="p-2 rounded-lg bg-slate-900 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                         <Plus className="h-5 w-5" />
                       </div>
-                      <span className="font-bold text-xs uppercase tracking-widest">Host</span>
+                      <span className="font-bold text-xs uppercase tracking-widest">Συνεδρια</span>
                     </Button>
                     <Button variant="outline" className="h-24 flex-col gap-2 border-slate-800 bg-slate-950/50 hover:bg-slate-800 hover:border-primary/50 transition-all group">
                       <div className="p-2 rounded-lg bg-slate-900 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                         <Search className="h-5 w-5" />
                       </div>
-                      <span className="font-bold text-xs uppercase tracking-widest">Join</span>
+                      <span className="font-bold text-xs uppercase tracking-widest">Αναζητηση</span>
                     </Button>
                     <Button variant="outline" className="h-24 flex-col gap-2 border-slate-800 bg-slate-950/50 hover:bg-slate-800 hover:border-primary/50 transition-all group" onClick={() => navigate('/army-builder')}>
                       <div className="p-2 rounded-lg bg-slate-900 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
-                        <Sword className="h-5 w-5" />
+                        <Library className="h-5 w-5" />
                       </div>
-                      <span className="font-bold text-xs uppercase tracking-widest">Armies</span>
+                      <span className="font-bold text-xs uppercase tracking-widest">Συλλογη</span>
                     </Button>
                     <Button variant="outline" className="h-24 flex-col gap-2 border-slate-800 bg-slate-950/50 hover:bg-slate-800 hover:border-primary/50 transition-all group">
                       <div className="p-2 rounded-lg bg-slate-900 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                         <Users className="h-5 w-5" />
                       </div>
-                      <span className="font-bold text-xs uppercase tracking-widest">Social</span>
+                      <span className="font-bold text-xs uppercase tracking-widest">Φιλοι</span>
                     </Button>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-slate-900/50 border-slate-800">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-bold text-white">Online Friends</CardTitle>
+                    <CardTitle className="text-[15px] font-bold text-white">Συνδεδεμένοι Φίλοι</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -296,15 +297,15 @@ export default function DashboardPage() {
                         <div key={i} className="flex items-center justify-between group cursor-pointer">
                           <div className="flex items-center gap-3">
                             <div className="relative">
-                              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 group-hover:border-primary/50 transition-colors">F{i}</div>
+                              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 group-hover:border-primary/50 transition-colors">Φ{i}</div>
                               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">Friend {i}</p>
-                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Playing Risk</p>
+                              <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">Φίλος {i}</p>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Παίζει Catan</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="h-8 text-primary hover:bg-primary/10">Invite</Button>
+                          <Button variant="ghost" size="sm" className="h-8 text-primary hover:bg-primary/10">Πρόσκληση</Button>
                         </div>
                       ))}
                     </div>

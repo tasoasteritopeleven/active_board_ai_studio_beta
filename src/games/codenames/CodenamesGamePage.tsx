@@ -10,17 +10,30 @@ import {
   EyeOff,
   Timer,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Hash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function CodenamesGamePage() {
   const navigate = useNavigate();
   const [isSpymaster, setIsSpymaster] = useState(false);
   const [redScore] = useState(8);
   const [blueScore] = useState(7);
+
+  const mockHistory = [
+    { team: 'red', type: 'clue', clue: 'GALAXY', number: 3, timestamp: '10:05 AM' },
+    { team: 'red', type: 'guess', word: 'ROBOT', result: 'red', timestamp: '10:06 AM' },
+    { team: 'red', type: 'guess', word: 'STAR', result: 'blue', timestamp: '10:06 AM', endedTurn: true },
+    { team: 'blue', type: 'clue', clue: 'OCEAN', number: 2, timestamp: '10:08 AM' },
+    { team: 'blue', type: 'guess', word: 'WATER', result: 'red', timestamp: '10:09 AM', endedTurn: true },
+    { team: 'red', type: 'clue', clue: 'FRUIT', number: 1, timestamp: '10:10 AM' },
+    { team: 'red', type: 'guess', word: 'APPLE', result: 'red', timestamp: '10:11 AM' },
+    { team: 'red', type: 'pass', timestamp: '10:12 AM', endedTurn: true },
+  ];
 
   const words = [
     { text: 'APPLE', type: 'red', revealed: true },
@@ -104,6 +117,82 @@ export default function CodenamesGamePage() {
             {isSpymaster ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
             Spymaster Mode
           </Button>
+
+          <Sheet>
+            <SheetTrigger>
+              <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 text-slate-400 hover:text-white cursor-pointer">
+                <History className="h-5 w-5" />
+              </div>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-[400px] bg-slate-950 border-l border-slate-800 p-0 flex flex-col">
+              <div className="p-4 border-b border-slate-800 shrink-0">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" />
+                  Game History
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {mockHistory.map((item, idx) => (
+                  <div key={idx} className="relative pl-6 pb-2">
+                    {/* Timeline Line */}
+                    {idx < mockHistory.length - 1 && (
+                      <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-slate-800"></div>
+                    )}
+                    
+                    {/* Timeline Dot */}
+                    <div 
+                      className={`absolute left-[6px] top-1.5 w-3 h-3 rounded-full border-2 border-slate-950 ${
+                        item.team === 'red' ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                    ></div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className={`text-xs font-bold uppercase ${item.team === 'red' ? 'text-red-500' : 'text-blue-500'}`}>
+                          {item.team} Team
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">{item.timestamp}</span>
+                      </div>
+                      
+                      {item.type === 'clue' && (
+                        <div className="flex items-center gap-2 text-white">
+                          <span className="text-sm font-bold tracking-widest">{item.clue}</span>
+                          <span className="text-xs text-slate-400 border border-slate-700 px-1.5 rounded bg-slate-800">
+                            {item.number}
+                          </span>
+                        </div>
+                      )}
+
+                      {item.type === 'guess' && item.word && item.result && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-300">Guessed</span>
+                          <span className="text-sm font-bold tracking-widest text-white">{item.word}</span>
+                          <span className="text-xs text-slate-500">→</span>
+                          <div className={`w-3 h-3 rounded-full ${
+                            item.result === 'red' ? 'bg-red-500' :
+                            item.result === 'blue' ? 'bg-blue-500' :
+                            item.result === 'assassin' ? 'bg-black border border-slate-700' :
+                            'bg-slate-500'
+                          }`}></div>
+                          <span className="text-xs text-slate-400 capitalize">
+                            {item.result === item.team ? 'Success' : 'Miss'}
+                            {item.endedTurn && ' • Turn Ended'}
+                          </span>
+                        </div>
+                      )}
+
+                      {item.type === 'pass' && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-400 italic">Passed their turn</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Button variant="ghost" size="icon" className="text-slate-400">
             <Settings className="h-5 w-5" />
           </Button>

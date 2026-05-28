@@ -1,5 +1,5 @@
 {
-  "name": "",
-  "description": "",
-  "requestFramePermissions": []
+  "name": "Catan 3D Telepresence",
+  "description": "Catan in 3D with telepresence video frames around the board.",
+  "requestFramePermissions": ["camera", "microphone"]
 }

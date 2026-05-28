@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
 import { Physics, RigidBody } from '@react-three/rapier';
 import { useCatanStore } from '../store/catanStore';
@@ -10,15 +10,31 @@ import { Vertices3D } from './Vertices3D';
 import { Edges3D } from './Edges3D';
 import { Ports3D } from './Ports3D';
 import { ResourcePopups3D } from './ui/ResourcePopups3D';
-import { Suspense } from 'react';
+import { Telepresence3D } from './ui/Telepresence3D';
+import { Suspense, useEffect } from 'react';
+
+function ResponsiveCamera() {
+  const { size, camera } = useThree();
+  useEffect(() => {
+    if (size.width < size.height) {
+      (camera as any).fov = 65;
+    } else {
+      (camera as any).fov = 45;
+    }
+    (camera as any).updateProjectionMatrix();
+  }, [size.width, size.height, camera]);
+  return null;
+}
 
 export function CatanBoard3D() {
   const hexes = useCatanStore((state) => state.hexes);
   const resourceFlows = useCatanStore((state) => state.resourceFlows);
   const removeResourceFlow = useCatanStore((state) => state.removeResourceFlow);
+  const diceResult = useCatanStore((state) => state.diceResult);
+  const diceRollId = useCatanStore((state) => state.diceRollId);
 
   return (
-    <div className="w-full h-full bg-slate-950">
+    <div className="w-full h-full bg-slate-950 touch-none overscroll-none select-none">
       <Canvas 
         camera={{ position: [0, 8, 10], fov: 45 }} 
         dpr={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 3) : 2}
@@ -31,6 +47,7 @@ export function CatanBoard3D() {
         }}
       >
         <Suspense fallback={null}>
+          <ResponsiveCamera />
           {/* Lighting Setup (Clean and clear) */}
           <ambientLight intensity={0.6} />
           <directionalLight
@@ -63,7 +80,10 @@ export function CatanBoard3D() {
             <Vertices3D />
             <ResourcePopups3D />
             
-            <RealisticDice result={useCatanStore((state) => state.diceResult)} />
+            <RealisticDice 
+              result={diceResult} 
+              rollId={diceRollId} 
+            />
 
             {/* Invisible floor for dice */}
             <RigidBody type="fixed" position={[0, 0.1, 0]}>
@@ -75,15 +95,22 @@ export function CatanBoard3D() {
           </Physics>
 
           <ResourceFlow3D flows={resourceFlows} onComplete={removeResourceFlow} />
+          
+          <Telepresence3D />
 
           <OrbitControls 
             makeDefault 
-            minPolarAngle={0} 
-            maxPolarAngle={Math.PI / 2.1} 
+            enableZoom={true}
+            enablePan={true}
+            enableRotate={true}
+            rotateSpeed={1.0}
+            minPolarAngle={Math.PI / 6} 
+            maxPolarAngle={Math.PI / 2.3} 
             minDistance={4} 
             maxDistance={25} 
             enableDamping={true}
             dampingFactor={0.05}
+            zoomSpeed={1.2}
           />
         </Suspense>
       </Canvas>

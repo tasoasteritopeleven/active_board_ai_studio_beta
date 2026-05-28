@@ -37,18 +37,28 @@ function FlowingItem({ flow, onComplete }: { flow: FlowingResource, onComplete: 
       return;
     }
 
-    // Calculate position with an arc
+    // Calculate position with an arc and basic interpolation
     const currentPos = new THREE.Vector3().lerpVectors(flow.startPos, flow.endPos, newProgress);
     
     // Add arc height
     const arcHeight = Math.sin(newProgress * Math.PI) * 3;
     currentPos.y += arcHeight;
+    
+    // Add wobble effect (perpendicular to the path)
+    const direction = new THREE.Vector3().subVectors(flow.endPos, flow.startPos).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(direction, up).normalize();
+    
+    // Wobble oscillating based on time/progress
+    const wobbleAmount = Math.sin(newProgress * Math.PI * 6) * 0.5 * (1 - newProgress); // Reduces wobble near the end
+    currentPos.addScaledVector(right, wobbleAmount);
 
     meshRef.current.position.copy(currentPos);
     
-    // Spin
-    meshRef.current.rotation.x += delta * 5;
-    meshRef.current.rotation.y += delta * 5;
+    // Enhanced Spin
+    meshRef.current.rotation.x += delta * 8;
+    meshRef.current.rotation.y += delta * 10;
+    meshRef.current.rotation.z += delta * 6;
   });
 
   const getColor = (type: ResourceType) => {

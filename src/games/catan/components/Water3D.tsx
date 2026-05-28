@@ -9,10 +9,8 @@ export function Water3D() {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (waterRef.current) {
-      // Subtle wave motion
-      waterRef.current.position.y = -0.05 + Math.sin(t * 1.5) * 0.02;
-      waterRef.current.rotation.z = Math.sin(t * 0.8) * 0.01;
-      waterRef.current.rotation.x = Math.cos(t * 1.2) * 0.01;
+      // Subtle wave motion (Y only, no rotation to prevent z-fighting with felt inlay)
+      waterRef.current.position.y = -0.05 + Math.sin(t * 1.5) * 0.01;
     }
     if (materialRef.current) {
       // Subtle color pulse

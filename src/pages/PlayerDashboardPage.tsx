@@ -7,7 +7,6 @@ import {
   Target, 
   TrendingUp, 
   Shield, 
-  Sword,
   User,
   Medal,
   ChevronRight,
@@ -24,16 +23,16 @@ export default function PlayerDashboardPage() {
   const [xp] = useState(75);
 
   const stats = [
-    { label: 'Win Rate', value: '64%', icon: Target, color: 'text-blue-500' },
-    { label: 'Total Games', value: '1,240', icon: Gamepad2, color: 'text-purple-500' },
-    { label: 'K/D Ratio', value: '2.4', icon: Sword, color: 'text-red-500' },
-    { label: 'Avg. Turn', value: '42s', icon: Clock, color: 'text-green-500' },
+    { label: 'Top 3 Τερματισμοί', value: '82%', icon: Target, color: 'text-blue-500' },
+    { label: 'Ολοκληρωμένα Παιχνίδια', value: '1,240', icon: Gamepad2, color: 'text-purple-500' },
+    { label: 'Έρως για', value: 'Στρατηγική', icon: Medal, color: 'text-red-500' },
+    { label: 'Μέσος Γύρος', value: '42s', icon: Clock, color: 'text-green-500' },
   ];
 
   const recentAchievements = [
-    { name: 'Unstoppable Force', desc: 'Win 10 games in a row', icon: Trophy, date: '2 days ago' },
-    { name: 'Master Strategist', desc: 'Capture a continent in 1 turn', icon: Medal, date: '1 week ago' },
-    { name: 'First Blood', desc: 'Eliminate a player in Phase 1', icon: Star, date: '2 weeks ago' },
+    { name: 'Ασταμάτητη Δύναμη', desc: 'Νίκησε σε 10 συνεχόμενα παιχνίδια', icon: Trophy, date: 'Πριν 2 μέρες' },
+    { name: 'Μετρ της Στρατηγικής', desc: 'Συγκέντρωσε τους περισσότερους πόρους σε 1 γύρο', icon: Medal, date: 'Πριν 1 εβδομάδα' },
+    { name: 'Γρήγορη Εκκίνηση', desc: 'Σημείωσε προβάδισμα από τον πρώτο γύρο', icon: Star, date: 'Πριν 2 εβδομάδες' },
   ];
 
   return (
@@ -44,7 +43,7 @@ export default function PlayerDashboardPage() {
           <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white" onClick={() => navigate(-1)}>
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold text-white">Player Profile</h1>
+          <h1 className="text-2xl font-bold text-white">Προφίλ Παίκτη</h1>
         </div>
 
         {/* Profile Header */}
@@ -63,21 +62,21 @@ export default function PlayerDashboardPage() {
             </div>
             <div className="flex-1 text-center md:text-left space-y-4">
               <div>
-                <h1 className="text-4xl font-bold text-white tracking-tight">Commander John Doe</h1>
-                <p className="text-slate-400 font-medium">Elite Strategist • Member since 2024</p>
+                <h1 className="text-4xl font-bold text-white tracking-tight">Παίκτης John Doe</h1>
+                <p className="text-slate-400 font-medium">Βετεράνος Board Gamer • Μέλος από το 2024</p>
               </div>
               <div className="space-y-2 max-w-md mx-auto md:mx-0">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider">Level Progress</span>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider">Πρόοδος Επιπέδου</span>
                   <span className="text-primary font-bold">{xp}%</span>
                 </div>
                 <Progress value={xp} className="h-2 bg-slate-800" />
-                <p className="text-xs text-slate-500">2,450 XP until Level {level + 1}</p>
+                <p className="text-xs text-slate-500">2,450 XP μέχρι το Επίπεδο {level + 1}</p>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="border-slate-800">Edit Profile</Button>
-              <Button className="bg-primary hover:bg-primary/90">Share Stats</Button>
+              <Button variant="outline" className="border-slate-800">Επεξεργασία</Button>
+              <Button className="bg-primary hover:bg-primary/90">Κοινοποίηση</Button>
             </div>
           </div>
         </div>
@@ -106,7 +105,7 @@ export default function PlayerDashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  Recent Achievements
+                  Πρόσφατα Επιτεύγματα
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -127,7 +126,7 @@ export default function PlayerDashboardPage() {
                   </div>
                 ))}
                 <Button variant="ghost" className="w-full text-slate-400 hover:text-white">
-                  View All Achievements
+                  Προβολή Όλων των Επιτευγμάτων
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -138,18 +137,18 @@ export default function PlayerDashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Most Played Systems
+                  Αγαπημένα Παιχνίδια
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { name: 'Risk Global', games: 452, color: 'from-red-500/20' },
-                  { name: 'Warhammer 40k', games: 312, color: 'from-blue-500/20' },
-                  { name: 'Catan', games: 184, color: 'from-orange-500/20' },
+                  { name: 'Terraforming Mars', games: 452, color: 'from-orange-500/20' },
+                  { name: 'Gloomhaven', games: 312, color: 'from-blue-500/20' },
+                  { name: 'Catan', games: 184, color: 'from-red-500/20' },
                 ].map((system) => (
                   <div key={system.name} className={`p-4 rounded-xl bg-gradient-to-br ${system.color} to-transparent border border-slate-800`}>
                     <p className="text-sm font-bold text-white mb-1">{system.name}</p>
-                    <p className="text-xs text-slate-500">{system.games} Battles</p>
+                    <p className="text-xs text-slate-500">{system.games} Παιχνίδια</p>
                   </div>
                 ))}
               </CardContent>
@@ -160,7 +159,7 @@ export default function PlayerDashboardPage() {
           <div className="space-y-6">
             <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
-                <CardTitle className="text-sm uppercase tracking-widest text-slate-500">Current Rank</CardTitle>
+                <CardTitle className="text-sm uppercase tracking-widest text-slate-500">Τρέχον Rank</CardTitle>
               </CardHeader>
               <CardContent className="text-center py-6">
                 <div className="relative inline-block">
@@ -172,27 +171,27 @@ export default function PlayerDashboardPage() {
                   </div>
                 </div>
                 <div className="mt-8 space-y-2">
-                  <p className="text-slate-400 text-sm">Top 2.4% of all players</p>
-                  <p className="text-xs text-slate-600">Season ends in 12 days</p>
+                  <p className="text-slate-400 text-sm">Κορυφαίο 2.4% των παικτών</p>
+                  <p className="text-xs text-slate-600">Η σεζόν λήγει σε 12 μέρες</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
-                <CardTitle className="text-sm uppercase tracking-widest text-slate-500">Recent Opponents</CardTitle>
+                <CardTitle className="text-sm uppercase tracking-widest text-slate-500">Συμπαίκτες & Αντίπαλοι</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold">
-                          OP
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold font-mono">
+                          ΠΛ
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white">Opponent {i}</p>
-                          <p className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Defeated</p>
+                          <p className="text-sm font-medium text-white">Παίκτης {i}</p>
+                          <p className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Ολοκληρώθηκε</p>
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600 hover:text-primary">

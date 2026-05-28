@@ -70,140 +70,160 @@ function TerritoryPiece({ territory, playerColor, continentColor, isSelected, is
   const [hovered, setHovered] = useState(false);
   const pos = useMemo(() => toBoard(territory.position.x, territory.position.y), [territory.position]);
 
-  // Create dashed border geometry
-  const borderGeo = useMemo(() => {
-    const pts = [];
-    for (let i = 0; i <= 64; i++) {
-      const theta = (i / 64) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(theta) * 1.3, Math.sin(theta) * 1.3, 0));
-    }
-    return new THREE.BufferGeometry().setFromPoints(pts);
-  }, []);
-
-  // Animate hover and pulsing highlight
+  // Animate hover
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (groupRef.current) {
-      const lift = hovered ? 0.15 : isSelected ? 0.1 : 0;
-      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, pos[1] + lift, 0.1);
-    }
-    if (ringRef.current && isSelected) {
-      const scale = 1 + Math.sin(t * 4) * 0.05;
-      ringRef.current.scale.set(scale, scale, 1);
-      const material = ringRef.current.material as THREE.MeshBasicMaterial;
-      if (material) material.opacity = 0.6 + Math.sin(t * 4) * 0.2;
+      let lift = 0;
+      if (isSelected || isAttackSource || isAttackTarget) {
+        lift = 0.5 + Math.sin(t * 8) * 0.1;
+      } else if (hovered) {
+        lift = 0.3 + Math.sin(t * 5) * 0.05;
+      }
+      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, pos[1] + lift, 0.15);
+      
+      // Slight rotation if selected
+      if (isSelected || isAttackSource) {
+        groupRef.current.rotation.y = Math.sin(t * 2) * 0.1;
+      } else {
+        groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, 0, 0.1);
+      }
     }
   });
 
   const isHighlighted = isSelected || isAttackSource || isAttackTarget;
   const borderColor = isAttackTarget ? '#FF4444' : isAttackSource ? '#FFCC00' : isSelected ? '#FFFFFF' : continentColor;
 
-  // Army type visual: 1-4 = infantry, 5-9 = cavalry, 10+ = cannon
-  const armyType = territory.armies >= 10 ? 'artillery' : territory.armies >= 5 ? 'cavalry' : 'infantry';
+  // Calculate actual troop pieces (10=artillery, 5=cavalry, 1=infantry)
+  const pieces = useMemo(() => {
+    let count = territory.armies;
+    const art = Math.floor(count / 10);
+    count -= art * 10;
+    const cav = Math.floor(count / 5);
+    count -= cav * 5;
+    const inf = count;
+
+    const result = [];
+    let index = 0;
+    const total = art + cav + inf;
+    
+    // Radius for scatter
+    const scatterRadius = Math.min(1.0, 0.4 + total * 0.1);
+
+    for (let i = 0; i < art; i++) {
+        const a = (index / total) * Math.PI * 2;
+        const r = total === 1 ? 0 : scatterRadius * (0.6 + 0.4 * Math.random());
+        result.push({ type: 'artillery', position: [Math.cos(a) * r, 0, Math.sin(a) * r], rotation: a });
+        index++;
+    }
+    for (let i = 0; i < cav; i++) {
+        const a = (index / total) * Math.PI * 2;
+        const r = total === 1 ? 0 : scatterRadius * (0.6 + 0.4 * Math.random());
+        result.push({ type: 'cavalry', position: [Math.cos(a) * r, 0, Math.sin(a) * r], rotation: a });
+        index++;
+    }
+    for (let i = 0; i < inf; i++) {
+        const a = (index / total) * Math.PI * 2;
+        const r = total === 1 ? 0 : scatterRadius * (0.3 + 0.7 * Math.random());
+        result.push({ type: 'infantry', position: [Math.cos(a) * r, 0, Math.sin(a) * r], rotation: a });
+        index++;
+    }
+    return result;
+  }, [territory.armies]);
 
   return (
     <group ref={groupRef} position={[pos[0], pos[1], pos[2]]}>
-      {/* Continent background circle (always visible, shows which continent) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <circleGeometry args={[1.3, 64]} />
-        <meshStandardMaterial color={continentColor} roughness={0.8} transparent opacity={0.4} />
+      {/* Invisible hit area for pointer events */}
+      <mesh
+        position={[0, 0.6, 0]}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
+        onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
+        visible={false}
+      >
+        <cylinderGeometry args={[1.5, 1.5, 1.6, 16]} />
+        <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
-      {/* Dashed border representing the state boundary */}
-      <lineLoop geometry={borderGeo} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} onUpdate={(self) => self.computeLineDistances()}>
-        <lineDashedMaterial color="#ffffff" transparent opacity={0.5} dashSize={0.2} gapSize={0.2} />
-      </lineLoop>
-
-      {/* Highlight ring when selected/attacking */}
+      {/* Selected/Attacking base indicator */}
       {isHighlighted && (
-        <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-          <ringGeometry args={[1.05, 1.35, 64]} />
-          <meshBasicMaterial color={borderColor} transparent opacity={0.7} />
+        <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[1.5, 32]} />
+          <meshBasicMaterial color={borderColor} transparent opacity={0.3} side={THREE.DoubleSide} />
         </mesh>
       )}
 
-      {/* Main territory disc — player ownership color */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.01, 0]}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        castShadow
-      >
-        <cylinderGeometry args={[1.0, 1.0, 0.1, 64]} />
-        <meshStandardMaterial
-          color={playerColor}
-          roughness={0.5}
-          metalness={0.15}
-          emissive={hovered ? playerColor : '#000000'}
-          emissiveIntensity={hovered ? 0.3 : 0}
-        />
-      </mesh>
+      {/* Selected Ring */}
+      {isSelected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <ringGeometry args={[1.4, 1.55, 32]} />
+          <meshBasicMaterial color={borderColor} transparent opacity={isSelected ? 0.8 : 0} />
+        </mesh>
+      )}
 
-      {/* Army figurine on top of disc */}
-      <group position={[0, 0.06, 0]}>
-        {armyType === 'infantry' && (
-          <>
-            {/* Soldier body */}
-            <mesh position={[0, 0.18, 0]} castShadow>
-              <capsuleGeometry args={[0.08, 0.2, 8, 16]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.2} />
-            </mesh>
-            {/* Head */}
-            <mesh position={[0, 0.38, 0]} castShadow>
-              <sphereGeometry args={[0.07, 16, 16]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.2} />
-            </mesh>
-            {/* Weapon/rifle */}
-            <mesh position={[0.06, 0.25, 0]} rotation={[0, 0, 0.3]} castShadow>
-              <cylinderGeometry args={[0.015, 0.015, 0.3, 8]} />
-              <meshStandardMaterial color="#444" metalness={0.6} roughness={0.3} />
-            </mesh>
-          </>
-        )}
-        {armyType === 'cavalry' && (
-          <>
-            {/* Horse body */}
-            <mesh position={[0, 0.12, 0]} castShadow>
-              <boxGeometry args={[0.25, 0.15, 0.12]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.2} />
-            </mesh>
-            {/* Horse head */}
-            <mesh position={[0.15, 0.2, 0]} rotation={[0, 0, 0.5]} castShadow>
-              <boxGeometry args={[0.06, 0.12, 0.06]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.2} />
-            </mesh>
-            {/* Rider */}
-            <mesh position={[0, 0.28, 0]} castShadow>
-              <capsuleGeometry args={[0.05, 0.12, 8, 12]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.3} />
-            </mesh>
-          </>
-        )}
-        {armyType === 'artillery' && (
-          <>
-            {/* Cannon barrel */}
-            <mesh position={[0.1, 0.1, 0]} rotation={[0, 0, 0.3]} castShadow>
-              <cylinderGeometry args={[0.04, 0.06, 0.3, 16]} />
-              <meshStandardMaterial color="#555" metalness={0.7} roughness={0.2} />
-            </mesh>
-            {/* Cannon base/carriage */}
-            <mesh position={[0, 0.05, 0]} castShadow>
-              <boxGeometry args={[0.2, 0.06, 0.12]} />
-              <meshStandardMaterial color={playerColor} roughness={0.5} metalness={0.2} />
-            </mesh>
-            {/* Wheels */}
-            <mesh position={[-0.08, 0.05, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.05, 0.05, 0.02, 16]} />
-              <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} />
-            </mesh>
-            <mesh position={[-0.08, 0.05, -0.08]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.05, 0.05, 0.02, 16]} />
-              <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} />
-            </mesh>
-          </>
-        )}
+      {/* Render army figurines */}
+      <group position={[0, 0.0, 0]} scale={[1.1, 1.1, 1.1]}>
+        {pieces.map((p, i) => (
+          <group key={i} position={p.position as [number,number,number]} rotation={[0, -p.rotation + Math.PI/2, 0]}>
+            {p.type === 'infantry' && (
+              <group position={[0,0.15,0]}>
+                {/* Base */}
+                <mesh position={[0,-0.1,0]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.2, 0.2, 0.05, 16]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} />
+                </mesh>
+                {/* Soldier Body */}
+                <mesh castShadow receiveShadow>
+                  <capsuleGeometry args={[0.08, 0.25, 8, 8]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} emissive="#fff" emissiveIntensity={hovered ? 0.2 : 0} />
+                </mesh>
+                {/* Soldier Head */}
+                <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+                  <sphereGeometry args={[0.09, 16, 16]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} emissive="#fff" emissiveIntensity={hovered ? 0.2 : 0} />
+                </mesh>
+              </group>
+            )}
+            {p.type === 'cavalry' && (
+              <group position={[0,0.2,0]}>
+                 {/* Base */}
+                 <mesh position={[0,-0.15,0]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.3, 0.3, 0.05, 16]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} />
+                </mesh>
+                <mesh castShadow receiveShadow>
+                  <boxGeometry args={[0.35, 0.2, 0.15]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} emissive="#fff" emissiveIntensity={hovered ? 0.2 : 0} />
+                </mesh>
+                <mesh position={[0.15, 0.2, 0]} rotation={[0, 0, 0.2]} castShadow receiveShadow>
+                  <boxGeometry args={[0.15, 0.2, 0.1]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} emissive="#fff" emissiveIntensity={hovered ? 0.2 : 0} />
+                </mesh>
+              </group>
+            )}
+            {p.type === 'artillery' && (
+              <group position={[0,0.15,0]}>
+                {/* Base */}
+                <mesh position={[0,-0.1,0]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.35, 0.35, 0.05, 16]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} />
+                </mesh>
+                <mesh position={[0, 0.1, 0]} rotation={[0, 0, -0.3]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.08, 0.12, 0.5, 16]} />
+                  <meshStandardMaterial color={playerColor} roughness={0.7} metalness={0.1} emissive="#fff" emissiveIntensity={hovered ? 0.2 : 0} />
+                </mesh>
+                <mesh position={[-0.1, 0, 0.15]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.15, 0.15, 0.08, 16]} />
+                  <meshStandardMaterial color="#222" roughness={0.9} metalness={0.1} />
+                </mesh>
+                <mesh position={[-0.1, 0, -0.15]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+                  <cylinderGeometry args={[0.15, 0.15, 0.08, 16]} />
+                  <meshStandardMaterial color="#222" roughness={0.9} metalness={0.1} />
+                </mesh>
+              </group>
+            )}
+          </group>
+        ))}
       </group>
 
       {/* Army count — Billboard for readability */}
@@ -223,34 +243,24 @@ function TerritoryPiece({ territory, playerColor, continentColor, isSelected, is
         </Float>
       </Billboard>
 
-      {/* Territory name & Continent — Billboard below */}
-      <Billboard position={[0, -0.6, 0.8]}>
-        <group>
-          <Text
-            fontSize={0.28}
-            color="#FFFFFF"
-            anchorX="center"
-            anchorY="middle"
-            outlineWidth={0.04}
-            outlineColor="#000"
-            fontWeight="bold"
-          >
-            {territory.name}
-          </Text>
-          <Text
-            position={[0, -0.25, 0]}
-            fontSize={0.16}
-            color={continentColor}
-            anchorX="center"
-            anchorY="middle"
-            outlineWidth={0.02}
-            outlineColor="#000"
-            letterSpacing={0.1}
-          >
-            {territory.continent.replace('-', ' ').toUpperCase()}
-          </Text>
-        </group>
-      </Billboard>
+      {/* Show name only when hovered or selected, to reduce clutter */}
+      {(hovered || isSelected || isHighlighted) && (
+        <Billboard position={[0, 2.5, 0]}>
+          <group>
+            <Text
+              fontSize={0.28}
+              color="#FFFFFF"
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.04}
+              outlineColor="#000"
+              fontWeight="bold"
+            >
+              {territory.name}
+            </Text>
+          </group>
+        </Billboard>
+      )}
     </group>
   );
 }
@@ -258,6 +268,34 @@ function TerritoryPiece({ territory, playerColor, continentColor, isSelected, is
 // ============================================================================
 // CONNECTION LINES between neighboring territories
 // ============================================================================
+
+const SEA_ROUTES = new Set([
+  '1-32', '32-1', // Alaska - Kamchatka
+  '38-12', '12-38', // Greenland - Iceland
+  '12-13', '13-12', // Iceland - Scandinavia
+  '12-14', '14-12', // Iceland - Great Britain
+  '14-13', '13-14', // Great Britain - Scandinavia
+  '14-15', '15-14', // Great Britain - Northern Europe
+  '14-16', '16-14', // Great Britain - Western Europe
+  '20-10', '10-20', // North Africa - Brazil
+  '25-22', '22-25', // Madagascar - East Africa
+  '25-24', '24-25', // Madagascar - South Africa
+  '39-34', '34-39', // Siam - Indonesia
+  '34-35', '35-34', // Indonesia - New Guinea
+  '34-36', '36-34', // Indonesia - Western Australia
+  '35-36', '36-35', // New Guinea - Western Australia
+  '35-37', '37-35', // New Guinea - Eastern Australia
+  '33-32', '32-33', // Japan - Kamchatka
+  '33-44', '44-33', // Japan - Mongolia
+  '38-2', '2-38',   // Greenland - NW Territory
+  '38-4', '4-38',   // Greenland - Ontario
+  '38-5', '5-38',   // Greenland - Quebec
+  '16-20', '20-16', // Western Europe - North Africa
+  '17-20', '20-17', // Southern Europe - North Africa
+  '17-21', '21-17', // Southern Europe - Egypt
+  '21-26', '26-21', // Egypt - Middle East
+  '22-26', '26-22', // East Africa - Middle East
+]);
 
 function ConnectionLines({ gameState }: { gameState: GameState }) {
   const lines = useMemo(() => {
@@ -269,6 +307,12 @@ function ConnectionLines({ gameState }: { gameState: GameState }) {
         if (!n) return;
         
         const sameOwner = t.ownerId === n.ownerId && t.ownerId !== null;
+        const routeKey = `${t.id}-${n.id}`;
+        
+        if (!SEA_ROUTES.has(routeKey)) {
+            // It's a land route, don't draw a dashed line just like real Risk board
+            return;
+        }
         
         // Handle wrap-around connections (like Alaska to Kamchatka)
         if (Math.abs(t.position.x - n.position.x) > 400) {
@@ -307,13 +351,14 @@ function ConnectionLines({ gameState }: { gameState: GameState }) {
         const pts = [new THREE.Vector3(l.from[0], 0.08, l.from[2]), new THREE.Vector3(l.to[0], 0.08, l.to[2])];
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         return (
-          <primitive object={new THREE.Line(geo)} key={i} onUpdate={(self: THREE.Line) => self.computeLineDistances()}>
+          <primitive object={new THREE.LineSegments(geo)} key={i} onUpdate={(self: THREE.LineSegments) => self.computeLineDistances()}>
             <lineDashedMaterial 
-              color={l.sameOwner ? '#ffffff' : '#1e293b'} 
+              color="#ffffff" 
               transparent 
-              opacity={l.sameOwner ? 0.4 : 0.6} 
-              dashSize={0.4}
-              gapSize={0.2}
+              opacity={0.85} 
+              dashSize={0.6}
+              gapSize={0.4}
+              linewidth={3}
             />
           </primitive>
         );
@@ -382,12 +427,12 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
   return (
     <>
-      {/* Cinematic Lighting Rig - BRIGHTER for better visibility */}
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[15, 25, 15]} intensity={2.5} castShadow shadow-mapSize={[4096, 4096]} shadow-bias={-0.0001} />
-      <pointLight position={[-15, 20, -15]} intensity={1.2} color="#a855f7" />
-      <spotLight position={[0, 40, 0]} intensity={2.0} angle={0.8} penumbra={1.0} castShadow />
-      
+      {/* Cinematic Lighting Rig - Toned down for less glare */}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[15, 25, 15]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0001} />
+      <pointLight position={[-15, 20, -15]} intensity={0.8} color="#a855f7" />
+      <spotLight position={[0, 40, 0]} intensity={1.2} angle={0.8} penumbra={1.0} castShadow />
+
       {/* HDR Environment for realistic reflections */}
       <Environment preset="studio" />
 
@@ -397,8 +442,8 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
         enablePan 
         enableZoom 
         enableRotate 
-        minDistance={12} 
-        maxDistance={60} 
+        minDistance={2} 
+        maxDistance={180} 
         maxPolarAngle={Math.PI / 2.2} 
         minPolarAngle={0.05}
         makeDefault
@@ -419,10 +464,8 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
         <meshStandardMaterial 
           map={mapTexture} 
           color="#ffffff" 
-          roughness={0.2} 
-          metalness={0.05}
-          emissive="#2A4B6E"
-          emissiveIntensity={0.15}
+          roughness={0.7} 
+          metalness={0.02}
         />
       </mesh>
 
@@ -503,19 +546,23 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
       {/* 3D Spatial Presence Panels */}
       {gameState.players.map((player, index) => {
-        // Position panels around the table
+        // Space panels in an ellipse just closer to the table borders
         const angle = (index / gameState.players.length) * Math.PI * 2;
-        const radius = 28;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
+        const radiusX = 27;
+        const radiusZ = 20;
+        const height = 4.0;
+        
+        const x = Math.cos(angle) * radiusX;
+        const z = Math.sin(angle) * radiusZ;
         const rotationY = -angle + Math.PI / 2;
+        const rotationX = -Math.PI / 6;
 
         return (
           <PresencePanel3D
             key={player.id}
             player={player}
-            position={[x, 5, z]}
-            rotation={[0, rotationY, 0]}
+            position={[x, height, z]}
+            rotation={[rotationX, rotationY, 0]}
             isLocal={index === 0} // First player is local for demo
             isLayoutMode={isLayoutMode}
           />
@@ -524,7 +571,7 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
 
       {/* Post-processing Pipeline */}
       <EffectComposer>
-        <Bloom luminanceThreshold={1.0} mipmapBlur intensity={0.3} />
+        <Bloom luminanceThreshold={1.0} mipmapBlur intensity={0.1} />
         <Vignette eskil={false} offset={0.02} darkness={0.6} />
         <SMAA />
       </EffectComposer>

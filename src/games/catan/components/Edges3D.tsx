@@ -113,8 +113,10 @@ function EdgeNode({ id, position, rotation }: { id: string, position: THREE.Vect
         <meshStandardMaterial 
           ref={materialRef}
           color={hovered ? "#fcd34d" : "#ffffff"} 
+          emissive={hovered ? "#fcd34d" : "#ffffff"}
+          emissiveIntensity={hovered ? 0.8 : 0.2}
           transparent 
-          opacity={0} 
+          opacity={isInteractable ? (hovered ? 0.8 : 0.4) : 0} 
           roughness={0.2}
           metalness={0.1}
         />
@@ -122,9 +124,9 @@ function EdgeNode({ id, position, rotation }: { id: string, position: THREE.Vect
 
       {/* Selected Outline */}
       {isPendingHere && (
-        <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[0.7, 0.3]} />
-          <meshBasicMaterial color="#fcd34d" side={THREE.DoubleSide} transparent opacity={0.5} />
+        <mesh position={[0, 0.05, 0]}>
+          <boxGeometry args={[0.7, 0.15, 0.2]} />
+          <meshBasicMaterial color="#fcd34d" transparent opacity={0.3} depthWrite={false} />
         </mesh>
       )}
 

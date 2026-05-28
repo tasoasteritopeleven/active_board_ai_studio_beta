@@ -10,12 +10,12 @@ export default function GamesSelectionPage() {
     <div className="min-h-screen bg-slate-950 text-slate-200 p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={() => navigate('/dashboard')}>
-          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+          <ChevronLeft className="mr-2 h-4 w-4" /> Επιστροφή στον Πίνακα Ελέγχου
         </Button>
 
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Select a Game</h1>
-          <p className="text-slate-400">Choose a game engine to start your session.</p>
+          <h1 className="text-[18px] font-bold text-white mb-2">Επιλογή Παιχνιδιού</h1>
+          <p className="text-slate-400">Επιλέξτε μια μηχανή παιχνιδιού για να ξεκινήσετε τη συνεδρία σας.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -28,20 +28,20 @@ export default function GamesSelectionPage() {
               <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Hexagon className="h-8 w-8 text-orange-500" />
               </div>
-              <CardTitle className="text-2xl text-white group-hover:text-orange-400 transition-colors">Settlers of Catan</CardTitle>
+              <CardTitle className="text-[19.2px] text-white group-hover:text-orange-400 transition-colors">Settlers of Catan</CardTitle>
               <CardDescription className="text-slate-400">
-                Resource management, trading, and building on a hex grid.
+                Διαχείριση πόρων, εμπόριο και χτίσιμο σε εξαγωνικό πλέγμα.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li>• 3D Hexagonal Terrain</li>
-                <li>• Physics-based Dice</li>
-                <li>• Resource Flow Animations</li>
-                <li>• AI Opponents</li>
+                <li>• 3D Εξαγωνικό Ταμπλό</li>
+                <li>• Φυσική Ζαριών</li>
+                <li>• Εφέ Ροής Πόρων</li>
+                <li>• AI Αντίπαλοι</li>
               </ul>
-              <Button className="w-full mt-6 bg-orange-600 hover:bg-orange-700 text-white">
-                Play Catan
+              <Button className="w-full mt-6 bg-orange-600 hover:bg-orange-700 text-white font-bold">
+                Παίξτε Catan
               </Button>
             </CardContent>
           </Card>
@@ -55,20 +55,20 @@ export default function GamesSelectionPage() {
               <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Globe2 className="h-8 w-8 text-blue-500" />
               </div>
-              <CardTitle className="text-2xl text-white group-hover:text-blue-400 transition-colors">Risk Global Domination</CardTitle>
+              <CardTitle className="text-[19.2px] text-white group-hover:text-blue-400 transition-colors">Risk Global Domination</CardTitle>
               <CardDescription className="text-slate-400">
-                Strategic conquest, army deployment, and territory control.
+                Στρατηγική κατάκτηση, ανάπτυξη στρατού και έλεγχος περιοχών.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li>• 3D World Map</li>
-                <li>• Spatial Presence Panels</li>
-                <li>• Cinematic Lighting</li>
-                <li>• AI Opponents</li>
+                <li>• 3D Παγκόσμιος Χάρτης</li>
+                <li>• Πάνελ Χωρικής Παρουσίας</li>
+                <li>• Κινηματογραφικός Φωτισμός</li>
+                <li>• AI Αντίπαλοι</li>
               </ul>
-              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white">
-                Play Risk
+              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                Παίξτε Risk
               </Button>
             </CardContent>
           </Card>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Sword, 
+  Library, 
   Shield, 
   Zap, 
   Plus, 
@@ -28,44 +28,42 @@ interface Unit {
   type: string;
   points: number;
   stats: {
-    move: string;
-    ws: string;
-    bs: string;
-    s: number;
-    t: number;
-    w: number;
-    a: number;
-    ld: number;
-    sv: string;
+    wood: number;
+    stone: number;
+    iron: number;
+    gold: number;
+    food: number;
+    vp: number;
+    time: string;
   };
 }
 
 const availableUnits: Unit[] = [
   { 
-    id: '1', name: 'Tactical Squad', type: 'Infantry', points: 100,
-    stats: { move: '6"', ws: '3+', bs: '3+', s: 4, t: 4, w: 2, a: 2, ld: 7, sv: '3+' }
+    id: '1', name: 'Βασικό Στοιχείο', type: 'Βασικό', points: 100,
+    stats: { wood: 2, stone: 0, iron: 0, gold: 1, food: 1, vp: 1, time: '10λ' }
   },
   { 
-    id: '2', name: 'Dreadnought', type: 'Vehicle', points: 180,
-    stats: { move: '8"', ws: '3+', bs: '3+', s: 6, t: 7, w: 8, a: 4, ld: 8, sv: '3+' }
+    id: '2', name: 'Σπάνιο Στοιχείο', type: 'Ελίτ', points: 180,
+    stats: { wood: 0, stone: 2, iron: 3, gold: 4, food: 2, vp: 3, time: '20λ' }
   },
   { 
-    id: '3', name: 'Scout Squad', type: 'Infantry', points: 70,
-    stats: { move: '7"', ws: '3+', bs: '3+', s: 4, t: 4, w: 2, a: 2, ld: 7, sv: '4+' }
+    id: '3', name: 'Ταχυκίνητο Κομμάτι', type: 'Βασικό', points: 70,
+    stats: { wood: 1, stone: 0, iron: 0, gold: 0, food: 2, vp: 1, time: '5λ' }
   },
   { 
-    id: '4', name: 'Captain', type: 'HQ', points: 120,
-    stats: { move: '6"', ws: '2+', bs: '2+', s: 4, t: 4, w: 5, a: 4, ld: 9, sv: '3+' }
+    id: '4', name: 'Κεντρικός Ήρωας', type: 'Ήρωας', points: 120,
+    stats: { wood: 0, stone: 0, iron: 2, gold: 5, food: 3, vp: 4, time: '15λ' }
   },
   { 
-    id: '5', name: 'Predator Tank', type: 'Vehicle', points: 150,
-    stats: { move: '10"', ws: '6+', bs: '3+', s: 6, t: 8, w: 11, a: 3, ld: 8, sv: '3+' }
+    id: '5', name: 'Βαρύς Εξοπλισμός', type: 'Ελίτ', points: 150,
+    stats: { wood: 4, stone: 4, iron: 1, gold: 2, food: 1, vp: 2, time: '12λ' }
   },
 ];
 
 export default function ArmyBuilderPage() {
   const navigate = useNavigate();
-  const [armyName, setArmyName] = useState('My First Legion');
+  const [armyName, setArmyName] = useState('Η Συλλογή Μου');
   const [armyDescription, setArmyDescription] = useState('');
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,27 +90,27 @@ export default function ArmyBuilderPage() {
   const totalPoints = selectedUnits.reduce((sum, unit) => sum + unit.points, 0);
 
   // Validation
-  const hasHQ = selectedUnits.some(u => u.type === 'HQ');
+  const hasHQ = selectedUnits.some(u => u.type === 'Ήρωας');
   const isOverPoints = totalPoints > MAX_POINTS;
   const isValid = hasHQ && !isOverPoints;
 
   const addUnit = (unit: Unit) => {
     if (totalPoints + unit.points > MAX_POINTS) {
-      toast.error(`Cannot add ${unit.name}: Exceeds point limit of ${MAX_POINTS}!`);
+      toast.error(`Αδύνατη προσθήκη ${unit.name}: Υπέρβαση ορίου αξίας ${MAX_POINTS}!`);
       return;
     }
     
-    // Rule of 3 check (excluding troops/infantry if we wanted to be strict, but let's just do a generic check for non-infantry)
-    if (unit.type !== 'Infantry') {
+    // Rule of 3 check (excluding basic units)
+    if (unit.type !== 'Βασικό') {
       const count = selectedUnits.filter(u => u.name === unit.name).length;
       if (count >= 3) {
-        toast.error(`Cannot add ${unit.name}: Maximum of 3 allowed per army!`);
+        toast.error(`Αδύνατη προσθήκη ${unit.name}: Μέγιστο 3 όμοια ανά σετ!`);
         return;
       }
     }
 
     setSelectedUnits([...selectedUnits, { ...unit, id: Math.random().toString() }]);
-    toast.success(`Added ${unit.name} to army.`);
+    toast.success(`Προστέθηκε ${unit.name} στη συλλογή.`);
   };
 
   const removeUnit = (id: string) => {
@@ -127,7 +125,7 @@ export default function ArmyBuilderPage() {
       points: totalPoints
     };
     localStorage.setItem('savedArmy', JSON.stringify(armyData));
-    toast.success('Army list saved successfully!');
+    toast.success('Η συλλογή αποθηκεύτηκε επιτυχώς!');
   };
 
   // Filter and Sort
@@ -154,28 +152,28 @@ export default function ArmyBuilderPage() {
               <ChevronLeft className="h-6 w-6" />
             </Button>
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground shrink-0">
-              <Sword className="h-6 w-6" />
+              <Library className="h-6 w-6" />
             </div>
             <div className="flex-1">
               <Input 
                 value={armyName} 
                 onChange={(e) => setArmyName(e.target.value)}
                 className="bg-transparent border-none text-xl font-bold p-0 h-auto focus-visible:ring-0 w-full"
-                placeholder="Army Name"
+                placeholder="Όνομα Σετ / Συλλογής"
               />
-              <p className="text-sm text-slate-400">Points Limit: {MAX_POINTS}</p>
+              <p className="text-sm text-slate-400">Όριο Αξίας: {MAX_POINTS}</p>
             </div>
           </div>
           <div className="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto">
             <div className="text-right">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Points</p>
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Συνολική Αξία</p>
               <p className={`text-2xl font-mono font-bold ${isOverPoints ? 'text-red-500' : 'text-primary'}`}>
                 {totalPoints} / {MAX_POINTS}
               </p>
             </div>
-            <Button className="bg-primary hover:bg-primary/90 text-white" onClick={saveArmy}>
+            <Button className="bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20" onClick={saveArmy}>
               <Save className="h-4 w-4 mr-2" />
-              Save List
+              Απoθήκευση
             </Button>
           </div>
         </div>
@@ -189,21 +187,21 @@ export default function ArmyBuilderPage() {
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <Input 
-                  placeholder="Search units..." 
-                  className="pl-10 bg-slate-900 border-slate-800 text-white" 
+                  placeholder="Αναζήτηση κομματιών..." 
+                  className="pl-10 bg-slate-900 border-slate-800 text-white font-medium" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-[180px] bg-slate-900 border-slate-800 text-white">
-                    <SelectValue placeholder="Sort by" />
+                  <SelectTrigger className="w-full sm:w-[180px] bg-slate-900 border-slate-800 text-white font-bold">
+                    <SelectValue placeholder="Ταξινόμηση" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="name">Name (A-Z)</SelectItem>
-                    <SelectItem value="points-asc">Points (Low to High)</SelectItem>
-                    <SelectItem value="points-desc">Points (High to Low)</SelectItem>
+                    <SelectItem value="name">Όνομα (A-Z)</SelectItem>
+                    <SelectItem value="points-asc">Αξία (Αύξουσα)</SelectItem>
+                    <SelectItem value="points-desc">Αξία (Φθίνουσα)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -211,17 +209,17 @@ export default function ArmyBuilderPage() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="bg-slate-900 border border-slate-800 w-full justify-start overflow-x-auto">
-                <TabsTrigger value="all">All Units</TabsTrigger>
-                <TabsTrigger value="infantry">Infantry</TabsTrigger>
-                <TabsTrigger value="vehicle">Vehicles</TabsTrigger>
-                <TabsTrigger value="hq">HQ</TabsTrigger>
+                <TabsTrigger value="all" className="font-bold">Όλα</TabsTrigger>
+                <TabsTrigger value="βασικό" className="font-bold">Βασικά</TabsTrigger>
+                <TabsTrigger value="ελίτ" className="font-bold">Ελίτ</TabsTrigger>
+                <TabsTrigger value="ήρωας" className="font-bold">Ήρωες</TabsTrigger>
               </TabsList>
               
               <TabsContent value={activeTab} className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredUnits.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-slate-500">
-                      No units found matching your criteria.
+                    <div className="col-span-full text-center py-12 text-slate-500 font-medium">
+                      Δεν βρέθηκαν κομμάτια με αυτά τα κριτήρια.
                     </div>
                   ) : (
                     filteredUnits.map((unit) => (
@@ -229,29 +227,43 @@ export default function ArmyBuilderPage() {
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
                             <div>
-                              <CardTitle className="text-lg text-white">{unit.name}</CardTitle>
-                              <CardDescription>{unit.type}</CardDescription>
+                              <CardTitle className="text-lg text-white font-black">{unit.name}</CardTitle>
+                              <CardDescription className="font-bold text-slate-500">{unit.type}</CardDescription>
                             </div>
                             <div className="bg-slate-800 px-2 py-1 rounded text-sm font-mono font-bold text-primary">
-                              {unit.points} pts
+                              {unit.points} ΑΞΙΑ
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent>
-                          <div className="grid grid-cols-9 gap-1 text-center mb-4">
+                          <div className="grid grid-cols-7 gap-1 text-center mb-4">
                             {Object.entries(unit.stats).map(([key, val]) => (
                               <div key={key} className="bg-slate-950 rounded p-1">
-                                <p className="text-[10px] text-slate-500 uppercase font-bold">{key}</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-black truncate" title={
+                                   key === 'wood' ? 'Κόστος Ξύλου' : 
+                                   key === 'stone' ? 'Κόστος Πέτρας' : 
+                                   key === 'iron' ? 'Κόστος Σιδήρου' : 
+                                   key === 'gold' ? 'Κόστος Χρυσού' : 
+                                   key === 'food' ? 'Τροφή / Συντήρηση' : 
+                                   key === 'vp' ? 'Πόντοι Νίκης' : 'Χρόνος'
+                                }>
+                                  {key === 'wood' ? 'ΞΥΛΟ' : 
+                                   key === 'stone' ? 'ΠΕΤΡΑ' : 
+                                   key === 'iron' ? 'ΣΙΔΗΡ' : 
+                                   key === 'gold' ? 'ΧΡΥΣΟΣ' : 
+                                   key === 'food' ? 'ΤΡΟΦΗ' : 
+                                   key === 'vp' ? 'ΝΙΚΗ' : 'ΧΡΟΝΟΣ'}
+                                </p>
                                 <p className="text-xs font-bold text-slate-200">{val}</p>
                               </div>
                             ))}
                           </div>
                           <Button 
-                            className="w-full bg-slate-800 hover:bg-primary hover:text-primary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all text-white"
+                            className="w-full bg-slate-800 hover:bg-primary hover:text-primary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all text-white font-black"
                             onClick={() => addUnit(unit)}
                           >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add to Army
+                            Προσθήκη στο Σετ
                           </Button>
                         </CardContent>
                       </Card>
@@ -266,14 +278,14 @@ export default function ArmyBuilderPage() {
           <div className="space-y-6">
             <Card className="bg-slate-900 border-slate-800 sticky top-24">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-white">
-                  Army List
-                  <span className="text-sm font-mono text-primary">{selectedUnits.length} Units</span>
+                <CardTitle className="flex items-center justify-between text-white font-black">
+                  Λίστα Συλλογής
+                  <span className="text-sm font-mono text-primary">{selectedUnits.length} Κομμάτια</span>
                 </CardTitle>
                 <div className="mt-2">
                   <textarea 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-md p-2 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-                    placeholder="Army description or notes..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-md p-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary resize-none font-medium"
+                    placeholder="Σημειώσεις ή περιγραφή..."
                     rows={3}
                     value={armyDescription}
                     onChange={(e) => setArmyDescription(e.target.value)}
@@ -284,20 +296,20 @@ export default function ArmyBuilderPage() {
                 {selectedUnits.length === 0 ? (
                   <div className="text-center py-12 border-2 border-dashed border-slate-800 rounded-lg">
                     <Shield className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-500">No units selected yet.</p>
-                    <p className="text-xs text-slate-600 mt-1">Start adding units from the library.</p>
+                    <p className="text-slate-500 font-bold">Δεν έχουν επιλεγεί κομμάτια.</p>
+                    <p className="text-xs text-slate-600 mt-1">Προσθέστε κομμάτια από τη βιβλιοθήκη δεξιά.</p>
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                     {selectedUnits.map((unit) => (
-                      <div key={unit.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800 group">
+                      <div key={unit.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800 group transition-all hover:border-primary/30">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                             <Zap className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-white">{unit.name}</p>
-                            <p className="text-xs text-slate-500">{unit.points} pts</p>
+                            <p className="text-sm font-bold text-white leading-none mb-1">{unit.name}</p>
+                            <p className="text-[10px] uppercase font-black text-slate-600">{unit.points} ΑΞΙΑ</p>
                           </div>
                         </div>
                         <Button 
@@ -315,45 +327,45 @@ export default function ArmyBuilderPage() {
 
                 <div className="pt-4 border-t border-slate-800 space-y-4">
                   <div className="flex justify-between text-sm items-center">
-                    <span className="text-slate-500">Army Composition</span>
+                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">ΣΥΝθεση σετ</span>
                     {isValid ? (
-                      <span className="text-green-500 font-medium flex items-center gap-1">
-                        <Shield className="h-4 w-4" /> Valid
+                      <span className="text-green-500 font-black flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                        <Shield className="h-3 w-3" /> ΕΓΚΥΡΟ
                       </span>
                     ) : (
-                      <span className="text-red-500 font-medium flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" /> Invalid
+                      <span className="text-red-500 font-black flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                        <AlertCircle className="h-3 w-3" /> ΜΗ ΕΓΚΥΡΟ
                       </span>
                     )}
                   </div>
                   
                   {!isValid && selectedUnits.length > 0 && (
-                    <div className="text-xs text-red-400 bg-red-500/10 p-2 rounded border border-red-500/20">
-                      {!hasHQ && <p>• Army must include at least 1 HQ unit.</p>}
-                      {isOverPoints && <p>• Army exceeds maximum point limit ({MAX_POINTS}).</p>}
+                    <div className="text-[10px] font-bold text-red-400 bg-red-500/10 p-3 rounded border border-red-500/20 uppercase tracking-widest leading-relaxed">
+                      {!hasHQ && <p>• Απαιτείται τουλάχιστον 1 Ήρωας/Αρχηγός.</p>}
+                      {isOverPoints && <p>• Υπέρβαση ορίου αξίας ({MAX_POINTS}).</p>}
                     </div>
                   )}
 
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-xs text-slate-500 uppercase font-bold">Total Points</p>
-                      <p className={`text-3xl font-mono font-bold ${isOverPoints ? 'text-red-500' : 'text-white'}`}>
+                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Συνολική Αξία</p>
+                      <p className={`text-3xl font-mono font-black ${isOverPoints ? 'text-red-500' : 'text-white'}`}>
                         {totalPoints}
                       </p>
                     </div>
-                    <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white">
-                      Export PDF
+                    <Button variant="outline" className="border-slate-800 text-slate-400 hover:text-white font-bold h-12 px-6">
+                      Εξαγωγή PDF
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 flex gap-3">
+            <div className="p-4 rounded-3xl bg-primary/5 border border-primary/10 flex gap-3">
               <Info className="h-5 w-5 text-primary shrink-0" />
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Your army list is automatically validated against the latest core rules and errata. 
-                <span className="text-primary hover:underline cursor-pointer ml-1">View rules.</span>
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                Η συλλογή σας επικυρώνεται αυτόματα με βάση τους τελευταίους κανόνες. 
+                <span className="text-primary hover:underline cursor-pointer ml-1 font-bold">Προβολή κανόνων.</span>
               </p>
             </div>
           </div>

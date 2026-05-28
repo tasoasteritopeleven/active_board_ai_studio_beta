@@ -22,6 +22,7 @@ export enum ResourceType {
 }
 
 export enum LifecyclePhase {
+  LOBBY = 'LOBBY',
   SETUP_1 = 'SETUP_1',
   SETUP_2 = 'SETUP_2',
   ROLLING = 'ROLLING',

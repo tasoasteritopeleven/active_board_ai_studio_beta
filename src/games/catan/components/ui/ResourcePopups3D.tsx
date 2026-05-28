@@ -46,7 +46,7 @@ export function ResourcePopups3D() {
   return (
     <group>
       {popups.map(popup => (
-        <Html key={popup.id} position={popup.position} center zIndexRange={[100, 0]}>
+        <Html key={popup.id} position={popup.position} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
           <motion.div
             initial={{ opacity: 0, y: 0, scale: 0.5 }}
             animate={{ opacity: 1, y: -60, scale: 1 }}

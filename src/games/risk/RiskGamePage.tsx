@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import RiskBoard3D from './RiskBoard3D';
-import { type GameState, type Territory } from './RiskEngine';
+import { type GameState, type Territory, type Player } from './RiskEngine';
 import { useRiskAI, AIPlayerConfig } from './ai/useRiskAI';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,56 @@ import { DiceRollButton } from '@/components/game/DiceRollButton';
 const AI_CONFIGS: AIPlayerConfig[] = [
   { id: 'p2', isAI: true, difficulty: 'Hard' },
 ];
+
+const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#f97316'];
+const PLAYER_NAMES = ['Διοικητής Άλφα', 'Στρατηγός Βήτα', 'Μάραρχος Γάμμα', 'Ναύαρχος Δέλτα', 'Λοχαγός Έψιλον', 'Ταγματάρχης Ζήτα'];
+
+function generateInitialGameState(playerCount: number, baseTerritories: Territory[]): GameState {
+  const players: Player[] = Array.from({ length: Math.min(6, Math.max(2, playerCount)) }, (_, i) => ({
+    id: `p${i + 1}`,
+    name: PLAYER_NAMES[i],
+    color: PLAYER_COLORS[i],
+    armiesToPlace: Math.max(20, 50 - playerCount * 5),
+    isEliminated: false
+  }));
+
+  let territories = JSON.parse(JSON.stringify(baseTerritories)) as Territory[];
+  territories.forEach(t => {
+    t.ownerId = null;
+    t.armies = 1;
+  });
+
+  const shuffledIds = territories.map(t => t.id).sort(() => Math.random() - 0.5);
+  shuffledIds.forEach((id, index) => {
+    const t = territories.find(x => x.id === id);
+    if (t) {
+      const p = players[index % players.length];
+      t.ownerId = p.id;
+      p.armiesToPlace--;
+    }
+  });
+
+  players.forEach(p => {
+    while (p.armiesToPlace > 0) {
+      const myTerritories = territories.filter(t => t.ownerId === p.id);
+      const randomT = myTerritories[Math.floor(Math.random() * myTerritories.length)];
+      if (randomT) {
+        randomT.armies++;
+        p.armiesToPlace--;
+      }
+    }
+    p.armiesToPlace = Math.max(3, Math.floor(territories.filter(t => t.ownerId === p.id).length / 3));
+  });
+
+  return {
+    territories,
+    players,
+    currentPlayerId: players[0].id,
+    phase: 'reinforce',
+    turnNumber: 1,
+    log: [`Το παιχνίδι ξεκίνησε με ${playerCount} παίκτες.`],
+  };
+}
 
 export default function RiskGamePage() {
   const navigate = useNavigate();
@@ -97,24 +147,28 @@ export default function RiskGamePage() {
     players: [
       { id: 'p1', name: 'Commander Alpha', color: '#ef4444', armiesToPlace: 12, isEliminated: false },
       { id: 'p2', name: 'General Beta', color: '#3b82f6', armiesToPlace: 3, isEliminated: false },
+      { id: 'p3', name: 'Marshal Gamma', color: '#22c55e', armiesToPlace: 3, isEliminated: false },
+      { id: 'p4', name: 'Admiral Delta', color: '#eab308', armiesToPlace: 3, isEliminated: false },
+      { id: 'p5', name: 'Captain Epsilon', color: '#a855f7', armiesToPlace: 3, isEliminated: false },
+      { id: 'p6', name: 'Major Zeta', color: '#f97316', armiesToPlace: 3, isEliminated: false },
     ],
     currentPlayerId: 'p1',
     phase: 'reinforce',
     turnNumber: 5,
-    log: ['Commander Alpha attacked Alberta from Alaska', 'General Beta reinforced NW Territory'],
+    log: ['Ο Διοικητής Άλφα επιτέθηκε στην Αλμπέρτα από την Αλάσκα', 'Ο Στρατηγός Βήτα ενίσχυσε τη ΒΔ Επικράτεια'],
   });
 
   const handleReinforce = useCallback((territoryId: string, amount: number) => {
     setGameState(prev => {
       const player = prev.players.find(p => p.id === prev.currentPlayerId);
       if (!player || player.armiesToPlace < amount) {
-        toast.error("Not enough armies to place!");
+        toast.error("Δεν υπάρχουν αρκετά στρατεύματα!");
         return prev;
       }
 
       const territory = prev.territories.find(t => t.id === territoryId);
       if (!territory || territory.ownerId !== prev.currentPlayerId) {
-        toast.error("You don't own this territory!");
+        toast.error("Δεν σας ανήκει αυτή η περιοχή!");
         return prev;
       }
 
@@ -126,13 +180,13 @@ export default function RiskGamePage() {
         p.id === prev.currentPlayerId ? { ...p, armiesToPlace: p.armiesToPlace - amount } : p
       );
 
-      toast.success(`Deployed ${amount} armies to ${territory.name}`);
+      toast.success(`Αναπτύχθηκαν ${amount} στρατεύματα στο ${territory.name}`);
 
       return {
         ...prev,
         territories: newTerritories,
         players: newPlayers,
-        log: [`${player.name} deployed ${amount} armies to ${territory.name}`, ...prev.log]
+        log: [`Ο ${player.name} ανέπτυξε ${amount} στρατεύματα στο ${territory.name}`, ...prev.log]
       };
     });
   }, []);
@@ -141,18 +195,24 @@ export default function RiskGamePage() {
     setGameState(prev => {
       const player = prev.players.find(p => p.id === prev.currentPlayerId);
       if (prev.phase === 'reinforce' && player && player.armiesToPlace > 0) {
-        toast.error(`You still have ${player.armiesToPlace} armies to deploy!`);
+        toast.error(`Έχετε ακόμα ${player.armiesToPlace} στρατεύματα για ανάπτυξη!`);
         return prev;
       }
 
       const nextPhase = prev.phase === 'reinforce' ? 'attack' : prev.phase === 'attack' ? 'fortify' : 'reinforce';
       
-      toast.info(`Phase changed to ${nextPhase.toUpperCase()}`);
+      const phaseNames: Record<string, string> = {
+        'reinforce': 'ΕΝΙΣΧΥΣΗ',
+        'attack': 'ΕΠΙΘΕΣΗ',
+        'fortify': 'ΟΧΥΡΩΣΗ'
+      };
+
+      toast.info(`Η φάση άλλαξε σε ${phaseNames[nextPhase]}`);
       
       return {
         ...prev,
         phase: nextPhase,
-        log: [`Phase changed to ${nextPhase}`, ...prev.log]
+        log: [`Η φάση άλλαξε σε ${nextPhase}`, ...prev.log]
       };
     });
   }, []);
@@ -171,9 +231,22 @@ export default function RiskGamePage() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xs sm:text-sm font-bold text-white uppercase tracking-widest truncate max-w-[120px] sm:max-w-none">Risk</h1>
+          <div className="hidden sm:flex bg-slate-800 rounded p-0.5 ml-2">
+            {[2,3,4,5,6].map(num => (
+                <button 
+                  key={num}
+                  onClick={() => setGameState(prev => generateInitialGameState(num, prev.territories))}
+                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${gameState.players.length === num ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  {num}P
+                </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
-          <Badge className="bg-primary/20 text-primary border-primary/20 uppercase text-[8px] sm:text-[10px]">{gameState.phase}</Badge>
+          <Badge className="bg-primary/20 text-primary border-primary/20 uppercase text-[8px] sm:text-[10px]">
+            {gameState.phase === 'reinforce' ? 'ΕΝΙΣΧΥΣΗ' : gameState.phase === 'attack' ? 'ΕΠΙΘΕΣΗ' : 'ΟΧΥΡΩΣΗ'}
+          </Badge>
           <div className="flex -space-x-2">
             {gameState.players.map(p => (
               <div key={p.id} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-slate-900" style={{ backgroundColor: p.color }} />
@@ -213,7 +286,7 @@ export default function RiskGamePage() {
         <div className="hidden sm:block absolute top-6 left-6 space-y-4 pointer-events-none">
           <Card className="w-64 bg-slate-900/90 backdrop-blur-xl border-slate-800 pointer-events-auto shadow-2xl">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-xs text-slate-500 uppercase tracking-widest font-bold">Current Turn</CardTitle>
+              <CardTitle className="text-xs text-slate-500 uppercase tracking-widest font-bold">Τρέχων Γύρος</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div className="flex items-center gap-3">
@@ -223,18 +296,18 @@ export default function RiskGamePage() {
                 <div>
                   <p className="text-sm font-bold text-white">{gameState.players.find(p => p.id === gameState.currentPlayerId)?.name}</p>
                   <p className="text-[10px] text-primary font-bold uppercase tracking-wider">
-                    {gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace} Armies to place
+                    {gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace} Στρατιώτες για τοποθέτηση
                   </p>
                 </div>
               </div>
               {gameState.phase === 'reinforce' && (
                 <Button 
-                  className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                  className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20"
                   onClick={handleEndPhase}
                   disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) > 0}
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  FINISH DEPLOYMENT
+                  ΟΛΟΚΛΗΡΩΣΗ ΤΟΠΟΘΕΤΗΣΗΣ
                 </Button>
               )}
             </CardContent>
@@ -264,7 +337,7 @@ export default function RiskGamePage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50 group hover:border-primary/50 transition-colors">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Armies</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Στρατός</p>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-primary" />
                           <p className="text-xl font-bold text-white">
@@ -273,7 +346,7 @@ export default function RiskGamePage() {
                         </div>
                       </div>
                       <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Owner</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Κάτοχος</p>
                         <p className="text-sm font-bold text-white truncate">
                           {gameState.players.find(p => p.id === gameState.territories.find(t => t.id === selectedTerritory)?.ownerId)?.name.split(' ')[1]}
                         </p>
@@ -283,7 +356,7 @@ export default function RiskGamePage() {
                     {gameState.phase === 'reinforce' && 
                      gameState.territories.find(t => t.id === selectedTerritory)?.ownerId === gameState.currentPlayerId && (
                       <div className="space-y-3 pt-2">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Deploy Troops</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Ανάπτυξη Στρατευμάτων</p>
                         <div className="flex items-center justify-between gap-2">
                           <Button 
                             variant="outline" 
@@ -317,9 +390,9 @@ export default function RiskGamePage() {
                     )}
 
                     {gameState.phase === 'attack' && (
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20">
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20">
                         <Sword className="h-4 w-4 mr-2" />
-                        ATTACK
+                        ΕΠΙΘΕΣΗ
                       </Button>
                     )}
                   </CardContent>
@@ -353,21 +426,21 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
   return (
     <div className="flex flex-col h-full p-4 space-y-6">
       <div className="space-y-4">
-        <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold">Current Turn</h3>
+        <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold">Τρεχων Γυρος</h3>
         <div className="flex items-center gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 shadow-xl">
           <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold shadow-lg text-lg" style={{ backgroundColor: currentPlayer?.color }}>
             {currentPlayer?.name[0]}
           </div>
           <div>
             <p className="text-sm font-bold text-white">{currentPlayer?.name}</p>
-            <p className="text-[10px] text-primary font-bold uppercase tracking-wider">{currentPlayer?.armiesToPlace} Armies to place</p>
+            <p className="text-[10px] text-primary font-bold uppercase tracking-wider">{currentPlayer?.armiesToPlace} Στρατεύματα για τοποθέτηση</p>
           </div>
         </div>
       </div>
 
       {selectedTerritory && territory && (
         <div className="space-y-4">
-          <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold">Selected Territory</h3>
+          <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold">Επιλεγμενη Περιοχη</h3>
           <Card className="bg-slate-950 border-slate-800 shadow-2xl overflow-hidden">
             <div className="h-1 w-full bg-primary" />
             <CardContent className="p-4 space-y-4">
@@ -382,14 +455,14 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-slate-900 p-3 rounded-xl border border-slate-800/50">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Armies</p>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Στρατος</p>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
                     <p className="text-xl font-bold text-white">{territory.armies}</p>
                   </div>
                 </div>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/50">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Owner</p>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Κατοχος</p>
                   <p className="text-sm font-bold text-white truncate">
                     {gameState.players.find(p => p.id === territory.ownerId)?.name.split(' ')[1]}
                   </p>
@@ -398,7 +471,7 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
 
               {gameState.phase === 'reinforce' && territory.ownerId === gameState.currentPlayerId && (
                 <div className="space-y-3 pt-2">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Deploy Troops</p>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Αναπτυξη Στρατευματων</p>
                   <div className="grid grid-cols-3 gap-2">
                     <Button 
                       variant="outline" 
@@ -432,9 +505,9 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
               )}
 
               {gameState.phase === 'attack' && (
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20 uppercase tracking-widest">
                   <Sword className="h-4 w-4 mr-2" />
-                  ATTACK
+                  ΕΠΙΘΕΣΗ
                 </Button>
               )}
             </CardContent>
@@ -443,8 +516,8 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
       )}
 
       <div className="flex-1">
-        <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-4">Game Log</h3>
-        <div className="space-y-2">
+        <h3 className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-4">Αρχειο Παιχνιδιου</h3>
+        <div className="space-y-2 overflow-y-auto max-h-[30vh] pr-2 custom-scrollbar">
           {gameState.log.slice(-5).map((entry, i) => (
             <div key={i} className="text-[10px] text-slate-400 p-2 bg-slate-950/50 rounded border border-slate-800/50">
               {entry}
