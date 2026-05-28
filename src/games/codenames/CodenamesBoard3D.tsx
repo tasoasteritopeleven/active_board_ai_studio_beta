@@ -48,7 +48,15 @@ function Card3D({
     targetY = 0.2;
   }
 
+  const animating = hovered || isRevealed;
+
   useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    if (!animating) {
+      groupRef.current.position.y = targetY;
+      groupRef.current.rotation.x = isRevealed ? Math.PI : 0;
+      return;
+    }
     if (groupRef.current) {
       groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 10 * delta);
       // Flip animation

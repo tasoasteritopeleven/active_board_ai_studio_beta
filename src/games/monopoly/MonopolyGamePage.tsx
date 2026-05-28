@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useStableBoardState } from '@/hooks/useStableBoardState';
+import { Board3DErrorBoundary } from '@/components/boardgame/Board3DErrorBoundary';
 import { DollarSign, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +16,7 @@ import {
   declineBuy,
   endTurn,
   rollDice,
+  buildHouse,
   type MonopolyState,
 } from './monopolyEngine';
 
@@ -24,7 +27,7 @@ export default function MonopolyGamePage() {
   const space = BOARD[current.position];
   const owned = Object.values(game.properties).filter((p) => p.ownerId === current.id);
 
-  const boardState = useMemo(() => {
+  const boardStatePayload = useMemo(() => {
     const houses: Record<number, number> = {};
     Object.values(game.properties).forEach((p) => {
       if (p.houses > 0) houses[p.spaceIndex] = p.houses;
@@ -35,10 +38,11 @@ export default function MonopolyGamePage() {
       houses,
     };
   }, [game.properties, current.position, current.color]);
+  const boardStateJson = useStableBoardState(boardStatePayload);
 
   const visual2D = (
     <MonopolyBoardVisual
-      state={boardState}
+      state={boardStatePayload}
       onRoll={() => setGame((g) => rollDice(g))}
     />
   );
@@ -61,7 +65,7 @@ export default function MonopolyGamePage() {
       board={
         <BoardGameViewport
           game="monopoly"
-          state={boardState}
+          stateJson={boardStateJson}
           className="absolute inset-0"
           render3D={<MonopolyBoard3D gameState={game} />}
           render2D={visual2D}
@@ -101,9 +105,17 @@ export default function MonopolyGamePage() {
               </>
             )}
             {game.phase === 'end' && (
-              <Button variant="secondary" className="font-bold uppercase" onClick={() => setGame((g) => endTurn(g))}>
-                Τέλος γύρου
-              </Button>
+              <>
+                {game.properties[current.position]?.ownerId === current.id &&
+                  (game.properties[current.position]?.houses ?? 0) < 4 && (
+                    <Button variant="outline" className="font-bold" onClick={() => setGame((g) => buildHouse(g))}>
+                      + Οικία (50$)
+                    </Button>
+                  )}
+                <Button variant="secondary" className="font-bold uppercase" onClick={() => setGame((g) => endTurn(g))}>
+                  Τέλος γύρου
+                </Button>
+              </>
             )}
           </div>
         </div>

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useStableBoardState } from '@/hooks/useStableBoardState';
+import { Board3DErrorBoundary } from '@/components/boardgame/Board3DErrorBoundary';
 import { Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +31,7 @@ export default function CodenamesGamePage() {
     .filter((c) => !c.revealed && c.type === game.activeTeam)
     .map((c) => c.word);
 
-  const boardState = useMemo(
+  const boardStatePayload = useMemo(
     () => ({
       words: game.cards.map((c) => ({
         text: c.word,
@@ -40,6 +42,7 @@ export default function CodenamesGamePage() {
     }),
     [game.cards, game.spymasterView],
   );
+  const boardStateJson = useStableBoardState(boardStatePayload);
 
   const handleAiHint = async () => {
     setAiLoading(true);
@@ -82,7 +85,7 @@ export default function CodenamesGamePage() {
       board={
         <BoardGameViewport
           game="codenames"
-          state={boardState}
+          stateJson={boardStateJson}
           className="absolute inset-0"
           render3D={
             <CodenamesBoard3D
@@ -92,7 +95,7 @@ export default function CodenamesGamePage() {
           }
           render2D={
             <CodenamesBoardVisual
-              state={boardState}
+              state={boardStatePayload}
               onCardClick={(index) => setGame((g) => guessCard(g, index))}
             />
           }

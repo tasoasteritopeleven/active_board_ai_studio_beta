@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import RiskBoard3D from './RiskBoard3D';
 import { BoardGameViewport } from '@/components/boardgame/BoardGameViewport';
 import { PhysicalTableLayout } from '@/components/boardgame/PhysicalTableLayout';
+import { Board3DErrorBoundary } from '@/components/boardgame/Board3DErrorBoundary';
+import { RiskBoard2D } from './RiskBoard2D';
+import { useRiskGameActions } from '././useRiskGameActions';
+import { useStableBoardState } from '@/hooks/useStableBoardState';
 import { type GameState, type Territory, type Player } from './RiskEngine';
 import { useRiskAI, AIPlayerConfig } from './ai/useRiskAI';
 import { Button } from '@/components/ui/button';
@@ -193,250 +197,118 @@ export default function RiskGamePage() {
     });
   }, []);
 
-  const handleEndPhase = useCallback(() => {
-    setGameState(prev => {
-      const player = prev.players.find(p => p.id === prev.currentPlayerId);
-      if (prev.phase === 'reinforce' && player && player.armiesToPlace > 0) {
-        toast.error(`Έχετε ακόμα ${player.armiesToPlace} στρατεύματα για ανάπτυξη!`);
-        return prev;
-      }
 
-      const nextPhase = prev.phase === 'reinforce' ? 'attack' : prev.phase === 'attack' ? 'fortify' : 'reinforce';
-      
-      const phaseNames: Record<string, string> = {
-        'reinforce': 'ΕΝΙΣΧΥΣΗ',
-        'attack': 'ΕΠΙΘΕΣΗ',
-        'fortify': 'ΟΧΥΡΩΣΗ'
-      };
+  const { handleTerritoryClick, handleExecuteAttack, handleEndPhase } = useRiskGameActions(
+    gameState,
+    setGameState,
+    selectedTerritory,
+    setSelectedTerritory,
+  );
 
-      toast.info(`Η φάση άλλαξε σε ${phaseNames[nextPhase]}`);
-      
-      return {
-        ...prev,
-        phase: nextPhase,
-        log: [`Η φάση άλλαξε σε ${nextPhase}`, ...prev.log]
-      };
-    });
-  }, []);
+  const boardStateJson = useStableBoardState({
+    territories: gameState.territories.map((tr) => ({
+      id: tr.id,
+      ownerId: tr.ownerId,
+      armies: tr.armies,
+    })),
+    selectedTerritory,
+    phase: gameState.phase,
+  });
 
-  useRiskAI(gameState, AI_CONFIGS, (action) => {
+  const risk2D = (
+    <RiskBoard2D
+      gameState={gameState}
+      selectedTerritory={selectedTerritory}
+      onTerritoryClick={handleTerritoryClick}
+    />
+  );
+
+    useRiskAI(gameState, AI_CONFIGS, (action) => {
     console.log('AI Action:', action);
   });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const currentPlayer = gameState.players.find((p) => p.id === gameState.currentPlayerId);
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-      <header className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => navigate('/games')}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xs sm:text-sm font-bold text-white uppercase tracking-widest truncate max-w-[120px] sm:max-w-none">Risk</h1>
-          <div className="hidden sm:flex bg-slate-800 rounded p-0.5 ml-2">
-            {[2,3,4,5,6].map(num => (
-                <button 
-                  key={num}
-                  onClick={() => setGameState(prev => generateInitialGameState(num, prev.territories))}
-                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${gameState.players.length === num ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                  {num}P
-                </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Badge className="bg-primary/20 text-primary border-primary/20 uppercase text-[8px] sm:text-[10px]">
+    <PhysicalTableLayout
+      title="Risk Global Domination"
+      subtitle={`Γύρος ${gameState.turnNumber} · TableForge`}
+      headerRight={
+        <>
+          <Badge className="bg-primary/20 text-primary border-primary/20 uppercase text-[9px]">
             {gameState.phase === 'reinforce' ? 'ΕΝΙΣΧΥΣΗ' : gameState.phase === 'attack' ? 'ΕΠΙΘΕΣΗ' : 'ΟΧΥΡΩΣΗ'}
           </Badge>
-          <div className="flex -space-x-2">
-            {gameState.players.map(p => (
-              <div key={p.id} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-slate-900" style={{ backgroundColor: p.color }} />
+          <div className="hidden sm:flex bg-slate-800 rounded p-0.5">
+            {[2, 3, 4, 5, 6].map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setGameState((prev) => generateInitialGameState(num, prev.territories))}
+                className={`text-[10px] px-2 py-0.5 rounded font-bold ${gameState.players.length === num ? 'bg-slate-600 text-white' : 'text-slate-400'}`}
+              >
+                {num}P
+              </button>
             ))}
           </div>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-            <SheetTrigger render={
-              <Button variant="ghost" size="icon" className="text-slate-400">
-                <Menu className="h-5 w-5" />
-              </Button>
-            } />
-            <SheetContent side="right" className="w-80 p-0 bg-slate-900 border-slate-800">
-              <RiskSidebarContent 
-                gameState={gameState} 
-                selectedTerritory={selectedTerritory} 
-                onReinforce={handleReinforce}
-              />
-            </SheetContent>
-          </Sheet>
-          <Button variant="ghost" size="icon" className="text-slate-400">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="flex-1 relative min-h-0">
+        </>
+      }
+      board={
         <BoardGameViewport
           game="risk"
-          state={{
-            territories: gameState.territories.map((t) => ({
-              id: t.id,
-              ownerId: t.ownerId,
-              armies: t.armies,
-            })),
-            selectedTerritory,
-            phase: gameState.phase,
-          }}
+          stateJson={boardStateJson}
           className="absolute inset-0"
           render3D={
-            <RiskBoard3D
-              gameState={gameState}
-              selectedTerritory={selectedTerritory}
-              onTerritoryClick={setSelectedTerritory}
-              onReinforce={handleReinforce}
-            />
+            <Board3DErrorBoundary fallback={risk2D}>
+              <RiskBoard3D
+                gameState={gameState}
+                selectedTerritory={selectedTerritory}
+                onTerritoryClick={handleTerritoryClick}
+                onReinforce={handleReinforce}
+              />
+            </Board3DErrorBoundary>
           }
+          render2D={risk2D}
         />
-
-        {/* HUD Overlay - Desktop only, mobile uses sidebar */}
-        <div className="hidden sm:block absolute top-6 left-6 space-y-4 pointer-events-none">
-          <Card className="w-64 bg-slate-900/90 backdrop-blur-xl border-slate-800 pointer-events-auto shadow-2xl">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-xs text-slate-500 uppercase tracking-widest font-bold">Τρέχων Γύρος</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{ backgroundColor: gameState.players.find(p => p.id === gameState.currentPlayerId)?.color }}>
-                  {gameState.players.find(p => p.id === gameState.currentPlayerId)?.name[0]}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">{gameState.players.find(p => p.id === gameState.currentPlayerId)?.name}</p>
-                  <p className="text-[10px] text-primary font-bold uppercase tracking-wider">
-                    {gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace} Στρατιώτες για τοποθέτηση
-                  </p>
-                </div>
-              </div>
-              {gameState.phase === 'reinforce' && (
-                <Button 
-                  className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20"
-                  onClick={handleEndPhase}
-                  disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) > 0}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  ΟΛΟΚΛΗΡΩΣΗ ΤΟΠΟΘΕΤΗΣΗΣ
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          <AnimatePresence>
-            {selectedTerritory && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <Card className="w-64 bg-slate-900/90 backdrop-blur-xl border-slate-800 pointer-events-auto shadow-2xl overflow-hidden">
-                  <div className="h-1 w-full bg-primary" />
-                  <CardContent className="p-4 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-bold text-white leading-tight">
-                          {gameState.territories.find(t => t.id === selectedTerritory)?.name}
-                        </h3>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
-                          {gameState.territories.find(t => t.id === selectedTerritory)?.continent.replace('-', ' ')}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="border-slate-700 text-slate-500 font-mono">#{selectedTerritory}</Badge>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50 group hover:border-primary/50 transition-colors">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Στρατός</p>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-primary" />
-                          <p className="text-xl font-bold text-white">
-                            {gameState.territories.find(t => t.id === selectedTerritory)?.armies}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Κάτοχος</p>
-                        <p className="text-sm font-bold text-white truncate">
-                          {gameState.players.find(p => p.id === gameState.territories.find(t => t.id === selectedTerritory)?.ownerId)?.name.split(' ')[1]}
-                        </p>
-                      </div>
-                    </div>
-
-                    {gameState.phase === 'reinforce' && 
-                     gameState.territories.find(t => t.id === selectedTerritory)?.ownerId === gameState.currentPlayerId && (
-                      <div className="space-y-3 pt-2">
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-center">Ανάπτυξη Στρατευμάτων</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 1)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 1}
-                          >
-                            <User className="h-3 w-3 mr-1" /> +1
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 5)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 5}
-                          >
-                            <Zap className="h-3 w-3 mr-1" /> +5
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 bg-slate-950 border-slate-800 hover:bg-primary/10 hover:border-primary/50"
-                            onClick={() => handleReinforce(selectedTerritory, 10)}
-                            disabled={(gameState.players.find(p => p.id === gameState.currentPlayerId)?.armiesToPlace || 0) < 10}
-                          >
-                            <Crosshair className="h-3 w-3 mr-1" /> +10
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {gameState.phase === 'attack' && (
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20">
-                        <Sword className="h-4 w-4 mr-2" />
-                        ΕΠΙΘΕΣΗ
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
+      }
+      actionDock={
+        <div className="space-y-2 text-center">
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest">
+            {currentPlayer?.name} · {currentPlayer?.armiesToPlace ?? 0} στρατεύματα
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {gameState.phase === 'reinforce' && selectedTerritory && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => handleReinforce(selectedTerritory, 1)}>+1</Button>
+                <Button size="sm" variant="outline" onClick={() => handleReinforce(selectedTerritory, 5)}>+5</Button>
+              </>
             )}
-          </AnimatePresence>
-        </div>
-
-        {/* Bottom Controls */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-[90%] sm:w-auto px-4 sm:px-0">
-          <Card className="bg-slate-900/90 backdrop-blur-xl border-slate-800 shadow-2xl">
-            <CardContent className="p-2 flex items-center justify-between sm:justify-start gap-2">
-              <DiceRollButton onClick={() => toast.info("Dice rolling logic coming soon!")} className="flex-1 sm:flex-none" />
-              <div className="w-px h-8 bg-slate-800 mx-1 sm:mx-2"></div>
-              <Button variant="ghost" size="icon" className="text-slate-400">
-                <MessageSquare className="h-5 w-5" />
+            {gameState.phase === 'attack' && (
+              <Button size="sm" className="bg-primary font-bold" onClick={handleExecuteAttack}>
+                ΕΠΙΘΕΣΗ
               </Button>
-            </CardContent>
-          </Card>
+            )}
+            <Button size="sm" variant="secondary" onClick={handleEndPhase}>
+              {gameState.phase === 'reinforce' ? 'Τέλος ενίσχυσης' : gameState.phase === 'attack' ? 'Τέλος επίθεσης' : 'Τέλος γύρου'}
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      }
+      sidebar={
+        <RiskSidebarContent
+          gameState={gameState}
+          selectedTerritory={selectedTerritory}
+          onReinforce={handleReinforce}
+          onExecuteAttack={handleExecuteAttack}
+          onEndPhase={handleEndPhase}
+        />
+      }
+    />
   );
 }
 
-function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gameState: GameState, selectedTerritory: string | null, onReinforce: (id: string, amount: number) => void }) {
+
+function RiskSidebarContent({ gameState, selectedTerritory, onReinforce, onExecuteAttack, onEndPhase }: { gameState: GameState; selectedTerritory: string | null; onReinforce: (id: string, amount: number) => void; onExecuteAttack: () => void; onEndPhase: () => void }) {
   const territory = gameState.territories.find(t => t.id === selectedTerritory);
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
   
@@ -522,7 +394,7 @@ function RiskSidebarContent({ gameState, selectedTerritory, onReinforce }: { gam
               )}
 
               {gameState.phase === 'attack' && (
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20 uppercase tracking-widest">
+                <Button onClick={onExecuteAttack} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 shadow-lg shadow-primary/20 uppercase tracking-widest">
                   <Sword className="h-4 w-4 mr-2" />
                   ΕΠΙΘΕΣΗ
                 </Button>

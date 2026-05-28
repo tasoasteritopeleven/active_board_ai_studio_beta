@@ -4,22 +4,20 @@
  * territory markers, 3D army pieces, and interactive gameplay
  */
 
-import { useRef, useState, useMemo, Suspense, useEffect, lazy } from 'react';
+import { useRef, useState, useMemo, Suspense, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   OrbitControls,
   Text,
   PerspectiveCamera,
   Html,
-  Environment,
   Billboard,
   Float,
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { type GameState, type Territory, CONTINENTS } from './RiskEngine';
-import { PresencePanel3D } from '@/components/game/PresencePanel3D';
 
-const RiskPostEffects = lazy(() => import('./RiskPostEffects'));
+// Post FX disabled for WebGL stability
 
 // ============================================================================
 // FLAT MAP APPROACH — Like a real Risk board game on a table
@@ -70,8 +68,16 @@ function TerritoryPiece({ territory, playerColor, continentColor, isSelected, is
   const [hovered, setHovered] = useState(false);
   const pos = useMemo(() => toBoard(territory.position.x, territory.position.y), [territory.position]);
 
-  // Animate hover
+  const animate = isSelected || isAttackSource || isAttackTarget || hovered;
+
   useFrame((state) => {
+    if (!animate) {
+      if (groupRef.current) {
+        groupRef.current.position.y = pos[1];
+        groupRef.current.rotation.y = 0;
+      }
+      return;
+    }
     const t = state.clock.getElapsedTime();
     if (groupRef.current) {
       let lift = 0;
@@ -298,76 +304,50 @@ const SEA_ROUTES = new Set([
 ]);
 
 function ConnectionLines({ gameState }: { gameState: GameState }) {
-  const lines = useMemo(() => {
-    const result: { from: [number, number, number]; to: [number, number, number]; sameOwner: boolean }[] = [];
+  const lineObjects = useMemo(() => {
+    const result: { from: [number, number, number]; to: [number, number, number] }[] = [];
     gameState.territories.forEach(t => {
       t.neighbors.forEach(nid => {
         if (t.id > nid) return;
         const n = gameState.territories.find(x => x.id === nid);
         if (!n) return;
-        
-        const sameOwner = t.ownerId === n.ownerId && t.ownerId !== null;
         const routeKey = `${t.id}-${n.id}`;
-        
-        if (!SEA_ROUTES.has(routeKey)) {
-            // It's a land route, don't draw a dashed line just like real Risk board
-            return;
-        }
-        
-        // Handle wrap-around connections (like Alaska to Kamchatka)
-        if (Math.abs(t.position.x - n.position.x) > 400) {
-          const leftNode = t.position.x < n.position.x ? t : n;
-          const rightNode = t.position.x < n.position.x ? n : t;
-          
-          // Draw line from left node to left edge
-          result.push({
-            from: toBoard(leftNode.position.x, leftNode.position.y),
-            to: toBoard(-50, (leftNode.position.y + rightNode.position.y) / 2),
-            sameOwner
-          });
-          
-          // Draw line from right node to right edge
-          result.push({
-            from: toBoard(rightNode.position.x, rightNode.position.y),
-            to: toBoard(850, (leftNode.position.y + rightNode.position.y) / 2),
-            sameOwner
-          });
-          return;
-        }
-        
+        if (!SEA_ROUTES.has(routeKey)) return;
+        if (Math.abs(t.position.x - n.position.x) > 400) return;
         result.push({
           from: toBoard(t.position.x, t.position.y),
           to: toBoard(n.position.x, n.position.y),
-          sameOwner,
         });
       });
     });
-    return result;
+    return result.map((l, i) => {
+      const pts = [
+        new THREE.Vector3(l.from[0], 0.08, l.from[2]),
+        new THREE.Vector3(l.to[0], 0.08, l.to[2]),
+      ];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineDashedMaterial({
+        color: '#ffffff',
+        transparent: true,
+        opacity: 0.75,
+        dashSize: 0.6,
+        gapSize: 0.4,
+      });
+      const line = new THREE.Line(geo, mat);
+      line.computeLineDistances();
+      return line;
+    });
   }, [gameState.territories]);
 
   return (
     <group>
-      {lines.map((l, i) => {
-        const pts = [new THREE.Vector3(l.from[0], 0.08, l.from[2]), new THREE.Vector3(l.to[0], 0.08, l.to[2])];
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        return (
-          <primitive object={new THREE.LineSegments(geo)} key={i} onUpdate={(self: THREE.LineSegments) => self.computeLineDistances()}>
-            <lineDashedMaterial 
-              color="#ffffff" 
-              transparent 
-              opacity={0.85} 
-              dashSize={0.6}
-              gapSize={0.4}
-              linewidth={3}
-            />
-          </primitive>
-        );
-      })}
+      {lineObjects.map((obj, i) => (
+        <primitive key={i} object={obj} />
+      ))}
     </group>
   );
 }
 
-// ============================================================================
 // CONTINENT NAME LABELS floating above the board
 // ============================================================================
 
@@ -430,8 +410,7 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
       <pointLight position={[-15, 20, -15]} intensity={0.8} color="#a855f7" />
       <spotLight position={[0, 40, 0]} intensity={1.2} angle={0.8} penumbra={1.0} castShadow />
 
-      {/* HDR Environment for realistic reflections */}
-      <Environment preset="studio" />
+      <hemisphereLight intensity={0.35} color="#b8c5e8" groundColor="#1a1208" />
 
       {/* Camera — top-down angled view like looking at a board game */}
       <PerspectiveCamera makeDefault position={[0, 32, 15]} fov={45} />
@@ -529,35 +508,7 @@ function BoardContent({ gameState, selectedTerritory, onTerritoryClick, onReinfo
           </div>
         </Html>
       )}
-
-      {/* 3D Spatial Presence Panels */}
-      {gameState.players.map((player, index) => {
-        // Space panels in an ellipse just closer to the table borders
-        const angle = (index / gameState.players.length) * Math.PI * 2;
-        const radiusX = 27;
-        const radiusZ = 20;
-        const height = 4.0;
-        
-        const x = Math.cos(angle) * radiusX;
-        const z = Math.sin(angle) * radiusZ;
-        const rotationY = -angle + Math.PI / 2;
-        const rotationX = -Math.PI / 6;
-
-        return (
-          <PresencePanel3D
-            key={player.id}
-            player={player}
-            position={[x, height, z]}
-            rotation={[rotationX, rotationY, 0]}
-            isLocal={index === 0} // First player is local for demo
-            isLayoutMode={isLayoutMode}
-          />
-        );
-      })}
-
-      <Suspense fallback={null}>
-        <RiskPostEffects />
-      </Suspense>
+      {/* Post FX off — enable via VITE_RISK_POSTFX=true */}
     </>
   );
 }
@@ -585,7 +536,7 @@ export default function RiskBoard3D({ gameState, selectedTerritory, onTerritoryC
           stencil: false,
           depth: true
         }} 
-        dpr={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 4) : 2}
+        dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2)]}
       >
         <Suspense fallback={<Html center><div className="text-white font-mono animate-pulse">LOADING WORLD MAP...</div></Html>}>
           <BoardContent

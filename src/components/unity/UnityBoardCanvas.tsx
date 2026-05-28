@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useRef, type ReactNode } from 'react';
 import { Unity, useUnityContext } from 'react-unity-webgl';
 import {
   buildInitPayload,
@@ -9,9 +9,12 @@ import {
 import {
   UNITY_BUILD_PATHS,
   UNITY_BUILD_PATHS_FALLBACK,
-  unityBuildAvailable,
 } from '@/lib/unity/paths';
 import '@/styles/boardgame.css';
+
+const UNITY_ENABLED =
+  import.meta.env.VITE_UNITY_WEBGL === 'true' ||
+  import.meta.env.VITE_UNITY_WEBGL === '1';
 
 interface UnityBoardCanvasProps {
   game: TableForgeGameId;
@@ -40,10 +43,13 @@ function UnityPlayer({
     productName: 'TableForge',
   });
 
+  const initSent = useRef(false);
+  const lastState = useRef('');
+
   useEffect(() => {
     const t = window.setTimeout(() => {
       if (!isLoaded) onFailed();
-    }, 45000);
+    }, 20000);
     return () => window.clearTimeout(t);
   }, [isLoaded, onFailed]);
 
@@ -57,17 +63,17 @@ function UnityPlayer({
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || initSent.current) return;
+    initSent.current = true;
     sendMessage('TableForgeJsBridge', 'ReceiveFromReact', buildInitPayload(game));
   }, [isLoaded, game, sendMessage]);
 
   useEffect(() => {
     if (!isLoaded || state === undefined) return;
-    sendMessage(
-      'TableForgeJsBridge',
-      'ReceiveFromReact',
-      buildStatePayload(state),
-    );
+    const payload = buildStatePayload(state);
+    if (payload === lastState.current) return;
+    lastState.current = payload;
+    sendMessage('TableForgeJsBridge', 'ReceiveFromReact', payload);
   }, [isLoaded, state, sendMessage]);
 
   return (
@@ -92,27 +98,14 @@ export function UnityBoardCanvas({
   className,
   fallback,
 }: UnityBoardCanvasProps) {
-  const [available, setAvailable] = useState<boolean | null>(null);
-  const [useBrotli, setUseBrotli] = useState(true);
+  if (!UNITY_ENABLED) {
+    return <>{fallback}</>;
+  }
+
+  const [useBrotli] = useState(true);
   const [unityFailed, setUnityFailed] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const brotli = await unityBuildAvailable();
-      if (brotli) {
-        setAvailable(true);
-        setUseBrotli(true);
-        return;
-      }
-      const plain = await fetch(UNITY_BUILD_PATHS_FALLBACK.loaderUrl, {
-        method: 'HEAD',
-      }).then((r) => r.ok);
-      setAvailable(plain);
-      setUseBrotli(false);
-    })();
-  }, []);
-
-  if (available !== true || unityFailed) {
+  if (unityFailed) {
     return <>{fallback}</>;
   }
 
