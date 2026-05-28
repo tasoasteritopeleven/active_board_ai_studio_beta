@@ -1,5 +1,10 @@
 import { BoardGameTable } from '@/components/boardgame/BoardGameTable';
-import type { CodenamesCard } from '../codenamesEngine';
+
+export type CodenamesCard = {
+  text: string;
+  type: 'red' | 'blue' | 'neutral' | 'assassin';
+  revealed: boolean;
+};
 
 export interface CodenamesBoardState {
   words: CodenamesCard[];
@@ -7,10 +12,7 @@ export interface CodenamesBoardState {
 }
 
 interface CodenamesBoardVisualProps {
-  cards: CodenamesCard[];
-  spymasterView: boolean;
-  activeTeam?: string;
-  disabled?: boolean;
+  state: CodenamesBoardState;
   onCardClick?: (index: number) => void;
 }
 
@@ -27,25 +29,25 @@ function cardFace(card: CodenamesCard, isSpymaster: boolean) {
   return `${map[card.type]} border-2`;
 }
 
-export function CodenamesBoardVisual({ cards, spymasterView, disabled, onCardClick }: CodenamesBoardVisualProps) {
+export function CodenamesBoardVisual({ state, onCardClick }: CodenamesBoardVisualProps) {
   return (
     <BoardGameTable>
       <div className="relative w-[min(95vw,720px)] p-4 sm:p-6">
         <div className="boardgame-felt rounded-lg p-4 sm:p-6 shadow-2xl">
           <div className="grid grid-cols-5 gap-2 sm:gap-3">
-            {cards.map((card, i) => (
+            {state.words.map((card, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => onCardClick?.(i)}
-                disabled={card.revealed || disabled}
-                className={`h-16 sm:h-24 rounded-md flex items-center justify-center font-bold text-[10px] sm:text-sm tracking-widest uppercase ${cardFace(card, spymasterView)}`}
+                disabled={card.revealed}
+                className={`h-16 sm:h-24 rounded-md flex items-center justify-center font-bold text-[10px] sm:text-sm tracking-widest uppercase ${cardFace(card, state.isSpymaster)}`}
               >
-                {card.word}
+                {card.text}
               </button>
             ))}
           </div>
-          {spymasterView && (
+          {state.isSpymaster && (
             <div className="mt-4 flex justify-center gap-3 text-[10px] uppercase tracking-widest text-[#c9e4d4]">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-red-500" /> Red

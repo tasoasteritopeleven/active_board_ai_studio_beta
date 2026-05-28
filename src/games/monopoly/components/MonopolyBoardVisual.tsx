@@ -1,11 +1,17 @@
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { BoardGameTable } from '@/components/boardgame/BoardGameTable';
+import { PhysicalDice } from '@/components/boardgame/PhysicalDice';
 import { MONOPOLY_SPACES } from '../monopolyBoardData';
-import type { MonopolyState } from '../monopolyEngine';
+
+export interface MonopolyBoardState {
+  position: number;
+  playerColor: string;
+  houses?: Record<number, number>;
+}
 
 interface MonopolyBoardVisualProps {
-  game: MonopolyState;
-  children?: ReactNode;
+  state: MonopolyBoardState;
+  onRoll?: (d1: number, d2: number) => void;
 }
 
 function spacePosition(index: number): CSSProperties {
@@ -18,7 +24,9 @@ function spacePosition(index: number): CSSProperties {
   return { left: '0', top: `${100 - pct}%`, transform: 'translateY(-50%)' };
 }
 
-export function MonopolyBoardVisual({ game, children }: MonopolyBoardVisualProps) {
+export function MonopolyBoardVisual({ state, onRoll }: MonopolyBoardVisualProps) {
+  const pawnStyle = useMemo(() => spacePosition(state.position), [state.position]);
+
   return (
     <BoardGameTable>
       <div className="relative w-[min(92vw,640px)] aspect-square">
@@ -30,48 +38,47 @@ export function MonopolyBoardVisual({ game, children }: MonopolyBoardVisualProps
           className="absolute rounded-sm overflow-hidden"
           style={{ inset: '3.5%', boxShadow: 'inset 0 0 0 4px #1a1208' }}
         >
-          {MONOPOLY_SPACES.map((space) => {
-            const hasHouses = false; // Add housing visual based on game.properties if needed
-            return (
-              <div
-                key={space.index}
-                className={`absolute boardgame-paper-tile flex flex-col items-center justify-end text-center ${
-                  space.isCorner ? 'w-[14%] h-[14%]' : 'w-[9%] h-[14%]'
-                }`}
-                style={spacePosition(space.index)}
-              >
-                {space.stripe && (
-                  <div
-                    className="w-full h-[22%] shrink-0"
-                    style={{ backgroundColor: space.stripe }}
-                  />
-                )}
-                <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-tight text-[#2a1810] px-0.5 pb-1 leading-tight">
-                  {space.label}
-                </span>
-              </div>
-            );
-          })}
+          {MONOPOLY_SPACES.map((space) => (
+            <div
+              key={space.index}
+              className={`absolute boardgame-paper-tile flex flex-col items-center justify-end text-center ${
+                space.isCorner ? 'w-[14%] h-[14%]' : 'w-[9%] h-[14%]'
+              }`}
+              style={spacePosition(space.index)}
+            >
+              {space.stripe && (
+                <div
+                  className="w-full h-[22%] shrink-0"
+                  style={{ backgroundColor: space.stripe }}
+                />
+              )}
+              <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-tight text-[#2a1810] px-0.5 pb-1 leading-tight">
+                {space.label}
+              </span>
+              {(state.houses?.[space.index] ?? 0) > 0 && (
+                <div className="absolute top-1 right-1 flex gap-px">
+                  {Array.from({ length: state.houses![space.index] }).map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 bg-[#22c55e] border border-[#14532d]" />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
 
           <div className="absolute inset-[14%] boardgame-felt rounded flex flex-col items-center justify-center gap-3">
             <p className="text-[#f5ecd8] font-black text-lg sm:text-2xl tracking-[0.2em] opacity-90">
               MONOPOLY
             </p>
-            {children}
+            <PhysicalDice onRoll={onRoll} />
           </div>
 
-          {game.players.map((p, pIndex) => (
-            <div
-              key={p.id}
-              className="boardgame-pawn absolute w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white z-20"
-              style={{
-                ...spacePosition(p.position),
-                backgroundColor: p.color,
-                marginLeft: (pIndex - 1.5) * 4,
-                marginTop: (pIndex - 1.5) * 4,
-              }}
-            />
-          ))}
+          <div
+            className="boardgame-pawn absolute w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white z-20"
+            style={{
+              ...pawnStyle,
+              backgroundColor: state.playerColor,
+            }}
+          />
         </div>
       </div>
     </BoardGameTable>

@@ -16,6 +16,7 @@ const MonopolyGamePage = lazy(() => import('@/games/monopoly/MonopolyGamePage'))
 const CatanGamePage = lazy(() => import('@/games/catan/CatanGamePage'));
 const CodenamesGamePage = lazy(() => import('@/games/codenames/CodenamesGamePage'));
 const RiskGamePage = lazy(() => import('@/games/risk/RiskGamePage'));
+const WordsGamePage = lazy(() => import('@/games/words/WordsGamePage'));
 const PlayerDashboardPage = lazy(() => import('@/pages/PlayerDashboardPage'));
 const GameLobbyPage = lazy(() => import('@/pages/GameLobbyPage'));
 const OpsWebRTCPage = lazy(() => import('@/pages/ops/OpsWebRTCPage'));
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/games/catan" element={<CatanGamePage />} />
             <Route path="/games/codenames" element={<CodenamesGamePage />} />
             <Route path="/games/risk" element={<RiskGamePage />} />
+            <Route path="/games/words" element={<WordsGamePage />} />
             <Route path="/ops/webrtc" element={<OpsWebRTCPage />} />
             <Route path="/ops/telepresence" element={<OpsTelepresenceLabPage />} />
             <Route path="/player" element={<PlayerDashboardPage />} />

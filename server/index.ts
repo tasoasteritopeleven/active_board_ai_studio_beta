@@ -1,13 +1,15 @@
 import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { GoogleGenAI } from '@google/genai';
 import { buildIceServers } from './webrtc/iceServers.js';
 import { getWebRtcDiagnostics } from './webrtc/diagnostics.js';
 import { createLiveKitParticipantToken, isLiveKitConfigured } from './livekit/token.js';
 
-
-import cors from 'cors';
-import { GoogleGenAI } from '@google/genai';
-
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT =
+  process.env.NODE_ENV === 'production'
+    ? 3000
+    : Number(process.env.PORT ?? 3001);
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const app = express();
@@ -91,8 +93,6 @@ The clue must be one word, uppercase, not matching any board word. Count is how 
   }
 });
 
-
-
 app.get('/api/webrtc/ice-servers', (_req, res) => {
   res.json({ iceServers: buildIceServers() });
 });
@@ -131,6 +131,14 @@ app.post('/api/livekit/token', async (req, res) => {
     res.status(500).json({ error: 'LiveKit token generation failed' });
   }
 });
+
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`TableForge API listening on http://localhost:${PORT}`);

@@ -1,18 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  ChevronLeft,
-  Eye,
-  EyeOff,
-  Sparkles,
-  Loader2,
-  History,
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useStableBoardState } from '@/hooks/useStableBoardState';
+import { Board3DErrorBoundary } from '@/components/boardgame/Board3DErrorBoundary';
+import { Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import { BoardGameTable } from '@/components/boardgame/BoardGameTable';
+import { PhysicalTableLayout } from '@/components/boardgame/PhysicalTableLayout';
+import { BoardGameViewport } from '@/components/boardgame/BoardGameViewport';
 import { CodenamesBoardVisual } from './components/CodenamesBoardVisual';
 import {
   createCodenamesGame,
@@ -23,9 +19,9 @@ import {
   type CodenamesState,
 } from './codenamesEngine';
 import { requestCodenamesHint } from '@/lib/ai/client';
+import CodenamesBoard3D from './CodenamesBoard3D';
 
 export default function CodenamesGamePage() {
-  const navigate = useNavigate();
   const [game, setGame] = useState<CodenamesState>(() => createCodenamesGame());
   const [clueWord, setClueWord] = useState('');
   const [clueCount, setClueCount] = useState(2);
@@ -35,145 +31,149 @@ export default function CodenamesGamePage() {
     .filter((c) => !c.revealed && c.type === game.activeTeam)
     .map((c) => c.word);
 
+  const boardStatePayload = useMemo(
+    () => ({
+      words: game.cards.map((c) => ({
+        text: c.word,
+        type: c.type,
+        revealed: c.revealed,
+      })),
+      isSpymaster: game.spymasterView,
+    }),
+    [game.cards, game.spymasterView],
+  );
+  const boardStateJson = useStableBoardState(boardStatePayload);
+
   const handleAiHint = async () => {
     setAiLoading(true);
     try {
-      const hint = await requestCodenamesHint({ words: teamWords, team: game.activeTeam });
+      const hint = await requestCodenamesHint({
+        words: teamWords,
+        team: game.activeTeam,
+      });
       setClueWord(hint.clue);
       setClueCount(hint.count);
       toast.success(`AI: ${hint.clue} / ${hint.count}`);
     } catch {
-      toast.error('Ο server AI δεν είναι διαθέσιμος.');
+      toast.error('Ο server AI δεν είναι διαθέσιμος (npm run dev + GEMINI_API_KEY).');
     } finally {
       setAiLoading(false);
     }
   };
 
-  const cardsDisabled =
-    game.winner !== null || (game.phase === 'clue' && !game.spymasterView);
-
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#061510] overflow-hidden">
-      <header className="h-11 shrink-0 border-b border-emerald-900/40 bg-[#0a1a14]/95 flex items-center justify-between px-3 z-30">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/games')}>
-          <ChevronLeft className="h-4 w-4 text-emerald-200/70" />
-        </Button>
-
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-10 rounded bg-gradient-to-b from-red-600 to-red-800 border border-red-950 flex flex-col items-center justify-center shadow-md">
-              <span className="text-[7px] font-bold text-red-100">RED</span>
-              <span className="text-lg font-black text-white leading-none">{game.redRemaining}</span>
+    <PhysicalTableLayout
+      title="Codenames"
+      subtitle="25 κάρτες · felt tabletop"
+      headerRight={
+        <>
+          <div className="flex gap-4 text-center text-sm">
+            <div>
+              <p className="text-[9px] text-red-500 font-bold uppercase">Κόκκινη</p>
+              <p className="font-bold">{game.redRemaining}</p>
             </div>
-            <div className="w-8 h-10 rounded bg-gradient-to-b from-blue-600 to-blue-800 border border-blue-950 flex flex-col items-center justify-center shadow-md">
-              <span className="text-[7px] font-bold text-blue-100">BLUE</span>
-              <span className="text-lg font-black text-white leading-none">{game.blueRemaining}</span>
+            <div>
+              <p className="text-[9px] text-blue-500 font-bold uppercase">Μπλε</p>
+              <p className="font-bold">{game.blueRemaining}</p>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant={game.spymasterView ? 'default' : 'outline'}
-            size="sm"
-            className="h-8 text-[10px]"
-            onClick={() => setGame((g) => toggleSpymasterView(g))}
-          >
-            {game.spymasterView ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            <span className="ml-1 hidden sm:inline">Spymaster</span>
+          <Button variant="outline" size="sm" onClick={() => setGame((g) => toggleSpymasterView(g))}>
+            {game.spymasterView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
-          <Sheet>
-            <SheetTrigger
-              render={
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-200/70">
-                  <History className="h-4 w-4" />
-                </Button>
-              }
+        </>
+      }
+      board={
+        <BoardGameViewport
+          game="codenames"
+          stateJson={boardStateJson}
+          className="absolute inset-0"
+          render3D={
+            <CodenamesBoard3D
+              gameState={game}
+              onGuess={(index) => setGame((g) => guessCard(g, index))}
             />
-            <SheetContent side="right" className="w-80 bg-[#0a1a14] border-emerald-900/40">
-              <h3 className="text-sm font-bold text-emerald-100 mb-3">Ιστορικό παρτίδας</h3>
-              <div className="space-y-2 text-xs text-emerald-200/70 max-h-[70vh] overflow-y-auto">
-                {game.log.map((l, i) => (
-                  <div key={i} className="p-2 rounded bg-emerald-950/50 border border-emerald-900/30">
-                    {l}
-                  </div>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </header>
-
-      {game.currentClue && game.phase === 'guess' && (
-        <div className="shrink-0 z-20 flex justify-center py-2 px-4">
-          <div className="inline-flex items-center gap-4 px-5 py-2 rounded-full bg-board-paper border-2 border-amber-900/30 shadow-lg board-fold-shadow">
-            <span className="text-[9px] uppercase text-amber-800 font-bold tracking-widest">Υπόδειξη</span>
-            <span className="text-xl font-black text-amber-950 tracking-widest">
-              {game.currentClue.word}{' '}
-              <span className="text-red-700">{game.currentClue.count}</span>
-            </span>
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setGame((g) => endGuessing(g))}>
-              Πέρασμα
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <BoardGameTable className="flex-1">
-        <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-center py-4 px-2">
-          <CodenamesBoardVisual
-            cards={game.cards}
-            spymasterView={game.spymasterView}
-            activeTeam={game.activeTeam}
-            disabled={cardsDisabled}
-            onCardClick={(index) => setGame((g) => guessCard(g, index))}
-          />
-
+          }
+          render2D={
+            <CodenamesBoardVisual
+              state={boardStatePayload}
+              onCardClick={(index) => setGame((g) => guessCard(g, index))}
+            />
+          }
+        />
+      }
+      actionDock={
+        <div className="space-y-2">
           {game.phase === 'clue' && (
-            <div className="mt-4 w-full max-w-sm rounded-xl border-2 border-amber-900/30 bg-board-paper p-4 shadow-xl board-fold-shadow">
-              <p className="text-[10px] uppercase text-amber-800 font-bold text-center mb-3 tracking-widest">
-                Κάρτα Spymaster — {game.activeTeam === 'red' ? 'Κόκκινη' : 'Μπλε'}
-              </p>
-              <div className="space-y-2">
-                <Input
-                  value={clueWord}
-                  onChange={(e) => setClueWord(e.target.value)}
-                  placeholder="Μία λέξη"
-                  className="bg-white/80 border-amber-900/20 text-amber-950 font-bold uppercase"
-                />
-                <Input
-                  type="number"
-                  min={1}
-                  max={3}
-                  value={clueCount}
-                  onChange={(e) => setClueCount(Number(e.target.value))}
-                  className="bg-white/80 border-amber-900/20"
-                />
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    className="flex-1 font-bold"
-                    onClick={() => {
-                      setGame((g) => giveClue(g, clueWord, clueCount));
-                      setClueWord('');
-                    }}
-                  >
-                    Δώσε υπόδειξη
-                  </Button>
-                  <Button variant="outline" disabled={aiLoading} onClick={handleAiHint}>
-                    {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                value={clueWord}
+                onChange={(e) => setClueWord(e.target.value)}
+                placeholder="Υπόδειξη (μία λέξη)"
+                className="bg-slate-950 border-slate-700 text-sm"
+              />
+              <Input
+                type="number"
+                min={1}
+                max={3}
+                value={clueCount}
+                onChange={(e) => setClueCount(Number(e.target.value))}
+                className="w-16 bg-slate-950 border-slate-700"
+              />
+              <Button
+                className="shrink-0"
+                onClick={() => {
+                  setGame((g) => giveClue(g, clueWord, clueCount));
+                  setClueWord('');
+                }}
+              >
+                Δώσε
+              </Button>
             </div>
           )}
-
+          {game.phase === 'guess' && game.currentClue && (
+            <div className="text-center">
+              <p className="font-bold text-primary text-lg">
+                {game.currentClue.word} / {game.currentClue.count}
+              </p>
+              <Button variant="secondary" size="sm" className="mt-2" onClick={() => setGame((g) => endGuessing(g))}>
+                Πέρασμα
+              </Button>
+            </div>
+          )}
           {game.winner && (
-            <p className="mt-4 font-black text-xl text-amber-200 uppercase tracking-widest drop-shadow-lg">
-              Νίκη — {game.winner === 'red' ? 'Κόκκινη' : 'Μπλε'}
+            <p className="text-center font-bold text-primary">
+              Νίκη: {game.winner === 'red' ? 'Κόκκινη' : 'Μπλε'}
             </p>
           )}
         </div>
-      </BoardGameTable>
-    </div>
+      }
+      sidebar={
+        <div className="p-4 space-y-4">
+          <Badge className={game.activeTeam === 'red' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}>
+            {game.activeTeam === 'red' ? 'Κόκκινη' : 'Μπλε'} — {game.phase === 'clue' ? 'Υπόδειξη' : 'Μάντεψε'}
+          </Badge>
+          {game.phase === 'clue' && (
+            <Card className="bg-slate-950/80 border-slate-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs uppercase text-slate-500">AI Spymaster</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full" disabled={aiLoading} onClick={handleAiHint}>
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  Gemini hint
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          <Card className="bg-slate-950/80 border-slate-800">
+            <CardContent className="pt-4 text-[10px] text-slate-400 max-h-48 overflow-y-auto space-y-1">
+              {game.log.slice(-8).map((l, i) => (
+                <div key={i}>{l}</div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      }
+    />
   );
 }

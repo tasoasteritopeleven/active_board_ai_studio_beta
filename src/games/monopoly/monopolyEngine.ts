@@ -249,6 +249,31 @@ export function declineBuy(state: MonopolyState): MonopolyState {
   return { ...state, phase: 'end', log: [...state.log, 'Πέρασε την αγορά.'] };
 }
 
+
+export function buildHouse(state: MonopolyState): MonopolyState {
+  const current = state.players.find((p) => p.id === state.currentPlayerId)!;
+  const prop = state.properties[current.position];
+  const space = BOARD[current.position];
+  if (!prop || prop.ownerId !== current.id || space.type !== 'property') return state;
+  if (prop.houses >= 4) return state;
+  const cost = 50;
+  if (current.money < cost) return state;
+
+  const players = state.players.map((p) =>
+    p.id === current.id ? { ...p, money: p.money - cost } : p,
+  );
+  const properties = {
+    ...state.properties,
+    [current.position]: { ...prop, houses: prop.houses + 1 },
+  };
+  return {
+    ...state,
+    players,
+    properties,
+    log: [...state.log, `${current.name} έχτισε οικία στο ${space.name} (-${cost}$)`],
+  };
+}
+
 export function endTurn(state: MonopolyState): MonopolyState {
   if (state.phase !== 'end' && state.phase !== 'buy') return state;
   const winnerId = checkWinner(state);

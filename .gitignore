@@ -9,3 +9,10 @@ coverage/
 
 test-results/
 playwright-report/
+
+unity/**/[Ll]ibrary/
+unity/**/[Tt]emp/
+unity/**/[Oo]bj/
+unity/**/Build/
+unity/**/[Ll]ogs/
+unity/**/[Uu]ser[Ss]ettings/

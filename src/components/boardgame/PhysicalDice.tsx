@@ -52,7 +52,8 @@ export function PhysicalDice({ onRoll, className, values, rolling: controlledRol
   const valB = values ? values[1] : b;
 
   const roll = () => {
-    if (controlledRolling !== undefined || onRoll === undefined) return;
+    if (controlledRolling !== undefined && values) return;
+    if (!onRoll) return;
     setRolling(true);
     setTimeout(() => {
       const na = 1 + Math.floor(Math.random() * 6);
@@ -60,7 +61,7 @@ export function PhysicalDice({ onRoll, className, values, rolling: controlledRol
       setA(na);
       setB(nb);
       setRolling(false);
-      onRoll?.(na, nb);
+      onRoll(na, nb);
     }, 520);
   };
 
@@ -69,7 +70,7 @@ export function PhysicalDice({ onRoll, className, values, rolling: controlledRol
       type="button"
       onClick={roll}
       className={`boardgame-dice-tray flex items-center gap-3 px-4 py-2 ${className ?? ''}`}
-      style={{ cursor: onRoll && controlledRolling === undefined ? 'pointer' : 'default' }}
+      style={{ cursor: onRoll ? 'pointer' : 'default' }}
     >
       <DieFace value={valA} rolling={isRolling} />
       <DieFace value={valB} rolling={isRolling} />
